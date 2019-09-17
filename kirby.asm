@@ -1,5 +1,13 @@
 SECTION "rom0", ROM0
-INCBIN "baserom.gb",0    ,$100
+INCBIN "baserom.gb",0,$40
+
+SECTION "vblankint", ROM0[$40]
+	jp $1d16
+SECTION "lcdcint", ROM0[$48]
+	jp $1e0f
+SECTION "timerint", ROM0[$50]
+        jp $1e48
+INCBIN "baserom.gb",$53, $100-$53
 
 SECTION "header", ROM0[$100]
 nop
