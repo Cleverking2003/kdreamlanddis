@@ -54,18 +54,20 @@ FillSomethingWithZeroes: ;TODO: why??
 
 INCBIN "baserom.gb",$1964,$20da-$1964
 
+;TODO: what's this?
 Func20da:
-    	ld a, e
-        ld [$d097], a
-        ld a, d
-        ld [$d098], a
+	ld a, e
+	ld [$d097], a
+	ld a, d
+	ld [$d098], a
 .lab20e2:
 	ld a, [hl]
 	cp $ff
 	ret z
 	and $e0
 	cp $e0
-	jr nz, $20fc
+	jr nz, .lab20fc
+.lab20ec:
 	ld a, [hl]
 	add a
 	add a
@@ -79,6 +81,7 @@ Func20da:
 	ld c, a
 	inc bc
 	jr .lab2104
+.lab20fc:
 	push af
 	ldi a, [hl]
 	and $1f
@@ -90,24 +93,136 @@ Func20da:
 	inc c
 	pop af
 	bit 7, a
-	jr nz, $2154
+	jr nz, .lab2154
+.lab210b:
 	cp $20
-	jr z, $2124
+	jr z, .lab2124
+.lab210f:
 	cp $40
-	jr z, $2131
+	jr z, .lab2131
+.lab2113:
 	cp $60
-	jr z, $2146
+	jr z, .lab2146
 .lab2117:
 	dec c
 	jr nz, .lab211e
+.lab211a:
 	dec b
 	jp z, .lab20e2
 .lab211e:
 	ldi a, [hl]
 	call $d099
 	jr .lab2117
+.lab2124:
+	ldi a, [hl]
+.lab2125:
+	dec c
+	jr nz, .lab212c
+.lab2128:
+	dec b
+	jp z, .lab20e2
+.lab212c:
+	call $d099
+	jr .lab2125
+.lab2131:
+	dec c
+	jr nz, .lab2138
+.lab2134:
+	dec b
+	jp z, .lab2142
+.lab2138:
+	ldi a, [hl]
+	call $d099
+	ldd a, [hl]
+	call $d099
+	jr .lab2131
+.lab2142:
+	inc hl
+	inc hl
+	jr .lab20e2
+.lab2146:
+	ldi a, [hl]
+.lab2147:
+	dec c
+	jr nz, .lab214e
+.lab214a:
+	dec b
+	jp z, .lab20e2
+.lab214e:
+	call $d099
+	inc a
+	jr .lab2147
+.lab2154:
+	push hl
+	push af
+	ldi a, [hl]
+	ld l, [hl]
+	ld h, a
+	ld a, [$d097]
+	add l
+	ld l, a
+	ld a, [$d098]
+	adc h
+	ld h, a
+	pop af
+	cp $80
+	jr z, .lab2170
+.lab2168:
+	cp $a0
+	jr z, .lab217b
+.lab216c:
+	cp $c0
+	jr z, .lab2193
+.lab2170:
+	dec c
+	jr nz, .lab2176
+.lab2173:
+	dec b
+	jr z, .lab219f
+.lab2176:
+	ldi a, [hl]
+	ld [de], a
+	inc de
+	jr .lab2170
+.lab217b:
+	dec c
+	jr nz, .lab2182
+.lab217e:
+	dec b
+	jp z, .lab219f
+.lab2182:
+	ldi a, [hl]
+	push bc
+	ld bc, 8
+.lab2187:
+	rra
+	rl b
+	dec c
+	jr nz, .lab2187
+.lab218d:
+	ld a, b
+	pop bc
+	ld [de], a
+	inc de
+	jr .lab217b
+.lab2193:
+	dec c
+	jr nz, .lab219a
+.lab2196:
+	dec b
+	jp z, .lab219f
+.lab219a:
+	ldd a, [hl]
+	ld [de], a
+	inc de
+	jr .lab2193
+.lab219f:
+	pop hl
+	inc hl
+	inc hl
+	jp $20e2
 
-INCBIN "baserom.gb", $2124, $21bb-$2124
+INCBIN "baserom.gb", $21a5, $21bb-$21a5
 
 InitWRAMRoutine:
 	ld hl, $d099
