@@ -1,5 +1,9 @@
 MBC1_BANK EQU $2100
 W_CURBANK EQU $d02c
+LCDC EQU $ff40
+SCY EQU $ff42
+SCX EQU $ff43
+LY EQU $ff44
 H_DMA_ROUTINE EQU $ff80
 H_STACK EQU $fffe
 
@@ -74,10 +78,10 @@ VBlankHandler:
 	push hl
 	ld hl, $ff8c
 	bit 6, [hl]
-	jp z, $1d9d
+	jp z, .lab1d9d
 	ld hl, $ff91
 	bit 2, [hl]
-	jp nz, $1da4
+	jp nz, .lab1da4
 	ld hl, $d035
 	inc [hl]
 	ld hl, $d034
@@ -95,6 +99,7 @@ VBlankHandler:
 	call $1f08
 	call $68e
 	jr .lab1d56
+.lab1d53:
 	call $1dfb
 .lab1d56:
 	ld hl, $ff91
@@ -137,8 +142,56 @@ VBlankHandler:
 	pop bc
 	pop af
 	reti
+.lab1d9d:
+	ld b, $50
+.lab1d9f:
+	dec b
+	jr nz, .lab1d9f
+	jr .lab1d53
+.lab1da4:
+	ld a, [$d053]
+	ld [SCX], a
+	ld a, [$d055]
+	ld [SCY], a
+	ld hl, $cb00
+.lab1db1:
+	ldi a, [hl]
+	and a
+	jr z, .lab1dbc
+	ld b, a
+	ldi a, [hl]
+	ld c, a
+	ldi a, [hl]
+	ld [bc], a
+	jr .lab1db1
+.lab1dbc:
+	ld hl, $ff91
+	res 2, [hl]
+	jr .lab1d53
 
-INCBIN "baserom.gb",$1d9d,$20da-$1d9d
+INCBIN "baserom.gb",$1dc3,$1e2e-$1dc3
+
+Func1e2e:
+	ld hl, $ff96
+	bit 7, [hl]
+	ret z
+	res 7, [hl]
+	ld hl, $d029
+	ldi a, [hl]
+	ld e, a
+	ldi a, [hl]
+	ld d, a
+	ldi a, [hl]
+	ld [de], a
+	inc e
+	ld [de], a
+	ld hl, $20
+	add hl, de
+	ldd [hl], a
+	ld [hl], a
+	ret
+
+INCBIN "baserom.gb",$1e48,$20da-$1e48
 
 ;TODO: what's this?
 Func20da:
