@@ -1,3 +1,8 @@
+MBC1_BANK EQU $2100
+W_CURBANK EQU $d02c
+H_DMA_ROUTINE EQU $ff80
+H_STACK EQU $fffe
+
 SECTION "rom0", ROM0
 INCBIN "baserom.gb",0,$40
 
@@ -21,10 +26,10 @@ Start:
 	xor a
 	ld [$ff40], a
 	di
-	ld sp, $fffe
-	ld a, $5
-	ld [$d02c], a
-	ld [$2100], a ; switch to bank 5
+	ld sp, H_STACK
+	ld a, 5
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a ; switch to bank 5
 	call MemInit
 	call CopyDMARoutine
 	call FillSomethingWithZeroes
@@ -60,7 +65,80 @@ FillSomethingWithZeroes: ;TODO: why??
 	jr nZ, .lab195d
 	ret
 
-INCBIN "baserom.gb",$1964,$20da-$1964
+INCBIN "baserom.gb",$1964,$1d16-$1964
+
+VBlankHandler:
+	push af
+	push bc
+	push de
+	push hl
+	ld hl, $ff8c
+	bit 6, [hl]
+	jp z, $1d9d
+	ld hl, $ff91
+	bit 2, [hl]
+	jp nz, $1da4
+	ld hl, $d035
+	inc [hl]
+	ld hl, $d034
+	inc [hl]
+	ld hl, $d032
+	inc [hl]
+	call $1fb2
+	call $1ee3
+	call $1e2e
+	call H_DMA_ROUTINE
+	ld a, [$ff8c]
+	and $9f
+	ld [$ff8c], a
+	call $1dfb
+	call $1f08
+	call $68e
+	jr .lab1d56
+	call $1dfb
+.lab1d56:
+	ld hl, $ff91
+	res 3, [hl]
+	ld hl, $d037
+	dec [hl]
+	jr nz, .lab1d6f
+	ld d, 2
+	ld a, [$d036]
+	xor 1
+	ld [$d036], a
+	jr z, .lab1d6e
+	inc d
+.lab1d6e:
+	ld [hl], d
+.lab1d6f:
+	inc hl
+	dec [hl]
+	jr nz, .lab1d82
+	ld d, 4
+	ld a, [$d036]
+	xor 2
+	ld [$d036], a
+	jr z, .lab1d81
+	ld d, 6
+.lab1d81:
+	ld [hl], d
+.lab1d82:
+	ld a, [W_CURBANK]
+	push af
+	ld a, 5
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a
+	call $4e0b
+	pop af
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a
+	pop hl
+	pop de
+	pop bc
+	pop af
+	reti
+
+INCBIN "baserom.gb",$1d9d,$20da-$1d9d
 
 ;TODO: what's this?
 Func20da:
@@ -228,7 +306,7 @@ Func20da:
 	pop hl
 	inc hl
 	inc hl
-	jp $20e2
+	jp .lab20e2
 
 INCBIN "baserom.gb", $21a5, $21bb-$21a5
 
