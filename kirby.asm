@@ -3,17 +3,36 @@ MBC1_BANK EQU $2100
 W_CURBANK EQU $d02c
 W_HP EQU $d086
 W_HP_MAX EQU $d087
+W_LIFES EQU $d089
+W_SCORE EQU $d08e
+W_BOSS_HP EQU $d093
+V_SC EQU $9c02
+V_SCORE EQU $9c06
+V_SCORE_ZERO EQU $9c0b
 V_HP_BAR EQU $9c26
+V_LIFES EQU $9c30
 LCDC EQU $ff40
 SCY EQU $ff42
 SCX EQU $ff43
 LY EQU $ff44
 H_DMA_ROUTINE EQU $ff80
+;HUD flags:
+;bit 7 - boss hp & indicator (instead of score and sc)
+;bit 4 - Kirby;s lifes
+;bit 2 - Kirby's hp
+;bit 1 - 'Sc:' text
+;bit 0 - score
+H_HUD_FLAGS EQU $ff8f
 H_STACK EQU $fffe
 
 ;Constants
 TILE_HP_SQUARE EQU $68
-TILE_HP_EMPTY EQU $6e
+TILE_BOSS_HP EQU $69
+TILE_BOSS EQU $6a
+TILE_SC EQU $6c
+TILE_HP_DOT EQU $6e
+TILE_ZERO EQU $72
+TILE_EMPTY EQU $7f
 
 SECTION "rom0", ROM0
 INCBIN "baserom.gb",0,$40
@@ -96,7 +115,7 @@ VBlankHandler:
 	inc [hl]
 	ld hl, $d032
 	inc [hl]
-	call $1fb2
+	call UpdateHUD
 	call $1ee3
 	call $1e2e
 	call H_DMA_ROUTINE
@@ -199,35 +218,122 @@ Func1e2e:
 	ld [hl], a
 	ret
 
-INCBIN "baserom.gb",$1e48,$202d-$1e48
+INCBIN "baserom.gb",$1e48,$1fb2-$1e48
 
-	ld a, [$ff8f]
+UpdateHUD:
+	ld hl, $ff8c
+	bit 5, [hl]
+	ret nz
+	ld hl, $ff90
+	bit 6, [hl]
+	ret nz
+	ld a, [H_HUD_FLAGS]
+	bit 0, a
+	jr z, .draw_sc
+	ld hl, V_SCORE
+	ld c, 12
+.clear_score:
+	ld a, TILE_EMPTY
+	ldi [hl], a
+	dec c
+	jr nz, .clear_score
+	ld a, [H_HUD_FLAGS]
+	bit 7, a
+	jr nz, .draw_boss_hp
+	ld hl, W_SCORE
+	ld bc, V_SCORE
+	ld d, 5
+.draw_score:
+	ldi a, [hl]
+	ld [bc], a
+	inc bc
+	dec d
+	jr nz, .draw_score
+	ld a, TILE_ZERO
+	ld [V_SCORE_ZERO], a
+	jr .score_done
+.draw_boss_hp:
+	ld hl, V_SCORE
+	ld a, [W_BOSS_HP]
+	and a
+	jr z, .score_done
+	ld c, a
+	ld a, TILE_BOSS_HP
+.draw_boss_hp_loop:
+	ldi [hl], a
+	dec c
+	jr nz, .draw_boss_hp_loop
+.score_done:
+	ld a, [H_HUD_FLAGS]
+	res 0, a
+	ld [H_HUD_FLAGS], a
+.draw_sc:
+	ld a, [H_HUD_FLAGS]
+	bit 1, a
+	jr z, .draw_hp
+	res 1, a
+	ld [H_HUD_FLAGS], a
+	bit 7, a
+	jr nz, .draw_mode_boss
+	ld a, TILE_EMPTY
+	ld [V_SC], a
+	ld a, TILE_SC
+	ld [V_SC+1], a
+	inc a
+	ld [V_SC+2], a
+	jr .draw_hp
+.draw_mode_boss:
+	ld a, TILE_EMPTY
+	ld [V_SC], a
+        ld a, TILE_BOSS
+        ld [V_SC+1], a
+        ld a, TILE_EMPTY
+        ld [V_SC+2], a
+.draw_hp:
+	ld a, [H_HUD_FLAGS]
 	bit 2, a
-	jr nz, $2054
-.update_hp:
+	jr nz, .draw_lifes
 	ld a, [W_HP]
 	ld c, a
 	ld b, a
 	ld hl, V_HP_BAR
 	and a
-	jr z, .draw_hp_empty
+	jr z, .draw_hp_dot
 	ld a, TILE_HP_SQUARE
-.draw_square_loop:
+.draw_hp_square_loop:
 	ldi [hl], a
 	dec c
-	jr nz, .draw_square_loop
-.draw_hp_empty:
+	jr nz, .draw_hp_square_loop
+.draw_hp_dot:
 	ld a, [W_HP_MAX]
 	sub b
 	ld b, a
-	jr z, $2051
-	ld a, TILE_HP_EMPTY
-.draw_empty_loop:
+	jr z, .draw_empty
+	ld a, TILE_HP_DOT
+.draw_hp_dot_loop:
 	ldi [hl], a
 	dec b
-	jr nz, .draw_empty_loop
+	jr nz, .draw_hp_dot_loop
+.draw_empty:
+	ld a, TILE_EMPTY
+	ldi [hl], a
+.draw_lifes:
+	ld a, [H_HUD_FLAGS]
+	bit 4, a
+	ret z
+	res 4, a
+	ld [H_HUD_FLAGS], a
+	ld a, [W_LIFES]
+	dec a
+	call $1c6b ;convert lifes to dec
+	add TILE_ZERO
+	ld [V_LIFES+1], a
+	ld a, b
+	add TILE_ZERO
+	ld [V_LIFES], a
+	ret
 
-INCBIN "baserom.gb",$2051,$20da-$2051
+INCBIN "baserom.gb",$2070,$20da-$2070
 
 ;TODO: what's this?
 Func20da:
