@@ -98,7 +98,9 @@ FillSomethingWithZeroes: ;TODO: why??
 
 INCBIN "baserom.gb",$1964,$1c6b-$1964
 
-ConvertToDec:
+; Get digits of a 
+; c - hundreds, b - tens, a - ones
+GetDigits:
 	ld b, $ff
 	ld c, b
 .count_hundreds:
@@ -342,7 +344,7 @@ UpdateHUD:
 	ld [H_HUD_FLAGS], a
 	ld a, [W_LIFES]
 	dec a
-	call ConvertToDec
+	call GetDigits
 	add TILE_ZERO
 	ld [V_LIFES+1], a
 	ld a, b
