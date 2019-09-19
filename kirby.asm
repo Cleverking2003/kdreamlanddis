@@ -96,7 +96,24 @@ FillSomethingWithZeroes: ;TODO: why??
 	jr nZ, .lab195d
 	ret
 
-INCBIN "baserom.gb",$1964,$1d16-$1964
+INCBIN "baserom.gb",$1964,$1c6b-$1964
+
+ConvertToDec:
+	ld b, $ff
+	ld c, b
+.count_hundreds:
+	inc c
+	sub 100
+	jr nc, .count_hundreds
+	add 100
+.count_tens:
+	inc b
+	sub 10
+	jr nc, .count_tens
+	add 10
+	ret
+
+INCBIN "baserom.gb",$1c7d,$1d16-$1c7d
 
 VBlankHandler:
 	push af
@@ -325,7 +342,7 @@ UpdateHUD:
 	ld [H_HUD_FLAGS], a
 	ld a, [W_LIFES]
 	dec a
-	call $1c6b ;convert lifes to dec
+	call ConvertToDec
 	add TILE_ZERO
 	ld [V_LIFES+1], a
 	ld a, b
@@ -505,6 +522,7 @@ Func20da:
 
 INCBIN "baserom.gb", $21a5, $21bb-$21a5
 
+; Some sort of 'ldi [de], a'
 InitWRAMRoutine:
 	ld hl, $d099
 	xor a
