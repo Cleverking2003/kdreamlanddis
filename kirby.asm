@@ -1,11 +1,19 @@
+;Addresses
 MBC1_BANK EQU $2100
 W_CURBANK EQU $d02c
+W_HP EQU $d086
+W_HP_MAX EQU $d087
+V_HP_BAR EQU $9c26
 LCDC EQU $ff40
 SCY EQU $ff42
 SCX EQU $ff43
 LY EQU $ff44
 H_DMA_ROUTINE EQU $ff80
 H_STACK EQU $fffe
+
+;Constants
+TILE_HP_SQUARE EQU $68
+TILE_HP_EMPTY EQU $6e
 
 SECTION "rom0", ROM0
 INCBIN "baserom.gb",0,$40
@@ -191,7 +199,35 @@ Func1e2e:
 	ld [hl], a
 	ret
 
-INCBIN "baserom.gb",$1e48,$20da-$1e48
+INCBIN "baserom.gb",$1e48,$202d-$1e48
+
+	ld a, [$ff8f]
+	bit 2, a
+	jr nz, $2054
+.update_hp:
+	ld a, [W_HP]
+	ld c, a
+	ld b, a
+	ld hl, V_HP_BAR
+	and a
+	jr z, .draw_hp_empty
+	ld a, TILE_HP_SQUARE
+.draw_square_loop:
+	ldi [hl], a
+	dec c
+	jr nz, .draw_square_loop
+.draw_hp_empty:
+	ld a, [W_HP_MAX]
+	sub b
+	ld b, a
+	jr z, $2051
+	ld a, TILE_HP_EMPTY
+.draw_empty_loop:
+	ldi [hl], a
+	dec b
+	jr nz, .draw_empty_loop
+
+INCBIN "baserom.gb",$2051,$20da-$2051
 
 ;TODO: what's this?
 Func20da:
