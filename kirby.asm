@@ -1,6 +1,9 @@
 ;Addresses
 MBC1_BANK EQU $2100
+W_LEVEL EQU $c600
+W_LEVEL_FRAME EQU $cb00
 W_CURBANK EQU $d02c
+W_COPY_COUNT EQU $d057
 W_HP EQU $d086
 W_HP_MAX EQU $d087
 W_LIFES EQU $d089
@@ -11,11 +14,13 @@ V_SCORE EQU $9c06
 V_SCORE_ZERO EQU $9c0b
 V_HP_BAR EQU $9c26
 V_LIFES EQU $9c30
+V_LEVEL EQU $9800
 LCDC EQU $ff40
 SCY EQU $ff42
 SCX EQU $ff43
 LY EQU $ff44
 H_DMA_ROUTINE EQU $ff80
+H_DRAW_FLAGS EQU $ff8c
 ;HUD flags:
 ;bit 7 - boss hp & indicator (instead of score and sc)
 ;bit 4 - Kirby;s lifes
@@ -67,64 +72,65 @@ Start:
 	call InitWRAMRoutine
 	call Func4b30
 
-INCBIN "baserom.gb",$174,$1352-$174
+INCBIN "baserom.gb",$174,$131a-$174
 
-;Func131a:
-;	push bc
-;	push hl
-;	ld l, a
-;	ld h, 0
-;	add hl, hl
-;	add hl, hl
-;	ld bc, $c600
-;	add hl, bc
-;	ld a, [$d057]
-;	ld [$d06b], a
-;	ld a, [$d058]
-;	ld [$d06c], a
-;	ld [$d07f], a
-;	call Func1352
-;	inc de
-;	ldi a, [hl]
-;	ld [de], a
-;	inc de
-;	ldi a, [hl]
-;	ld [de], a
-;	inc de
-;	ldi a, [hl]
-;	ld [de], a
-;	inc de
-;	ld a, [hl]
-;	ld [de], a
-;	inc de
-;	ld a, [$d06b]
-;	ld [$d057], a
-;	ld a, [$d06c]
-;	ld [$d058], a
-;	pop hl
-;	pop bc
-;	ret
-
-Func1352:
+; a - offset from $c600 div 4
+; copies 4 bytes to de
+CopyLevelBlock:
 	push bc
 	push hl
-	ld hl, $9800
-	ld a, [$d057]
+	ld l, a
+	ld h, 0
+	add hl, hl
+	add hl, hl
+	ld bc, W_LEVEL
+	add hl, bc
+	ld a, [W_COPY_COUNT]
+	ld [$d06b], a
+	ld a, [W_COPY_COUNT+1]
+	ld [$d06c], a
+	ld [$d07f], a
+	call CopyBlockHeader
+	ldi a, [hl]
+	ld [de], a
+	inc de
+	ldi a, [hl]
+	ld [de], a
+	inc de
+	ldi a, [hl]
+	ld [de], a
+	inc de
+	ld a, [hl]
+	ld [de], a
+	inc de
+	ld a, [$d06b]
+	ld [W_COPY_COUNT], a
+	ld a, [$d06c]
+	ld [W_COPY_COUNT+1], a
+	pop hl
+	pop bc
+	ret
+
+CopyBlockHeader:
+	push bc
+	push hl
+	ld hl, V_LEVEL
+	ld a, [W_COPY_COUNT]
 	srl a
 	srl a
 	srl a
 	ld [$d06e], a
-	ld a, [$d058]
+	ld a, [W_COPY_COUNT+1]
 	srl a
 	srl a
 	srl a
-	jr z, .lab1375
+	jr z, .copy_addr
 	ld bc, $20
-.lab1371:
+.get_offset:
 	add hl, bc
 	dec a
-	jr nz, .lab1371
-.lab1375:
+	jr nz, .get_offset
+.copy_addr:
 	ld b, 0
 	ld a, [$d06e]
 	ld c, a
@@ -168,61 +174,61 @@ FillSomethingWithZeroes: ;TODO: why??
 	jr nZ, .lab195d
 	ret
 
-Func1964:
+CopyLevelFrame:
 	push bc
 	push de
 	xor a
-	ld [$d057], a
-	ld [$d058], a
-	ld de, $cb00
+	ld [W_COPY_COUNT], a
+	ld [W_COPY_COUNT+1], a
+	ld de, W_LEVEL_FRAME
 	ld a, $a
 	ld b, a
-.lab1973:
+.copy_loop:
 	ld a, [$d03f]
 	cp $a
-	jr z, .lab197c
+	jr z, .last_blocks
 	ld a, $b
-.lab197c:
+.last_blocks:
 	ld c, a
-.lab197d:
+.copy_blocks:
 	ldi a, [hl]
-	call $131a
-	ld a, [$d057]
+	call CopyLevelBlock
+	ld a, [W_COPY_COUNT]
 	add $10
-	ld [$d057], a
+	ld [W_COPY_COUNT], a
 	dec c
-	jr nz, .lab197d
+	jr nz, .copy_blocks
 	push bc
 	ld b, 0
 	ld a, [$d03f]
 	sub $a
-	jr z, .lab1998
+	jr z, .last2
 	sub 1
-.lab1998:
+.last2:
 	ld c, a
 	add hl, bc
 	pop bc
 	xor a
-	ld [$d057], a
-	ld a, [$d058]
+	ld [W_COPY_COUNT], a
+	ld a, [W_COPY_COUNT+1]
 	add $10
-	ld [$d058], a
+	ld [W_COPY_COUNT+1], a
 	dec b
-	jr nz, .lab1973
+	jr nz, .copy_loop
 	xor a
 	ld [de], a
-	ld [$d057], a
-	ld [$d058], a
+	ld [W_COPY_COUNT], a
+	ld [W_COPY_COUNT+1], a
 	xor a
 	ld [SCX], a
 	ld [SCY], a
-	ld a, [$ff8c]
+	ld a, [H_DRAW_FLAGS]
 	or $60
-	ld [$ff8c], a
+	ld [H_DRAW_FLAGS], a
 	call CopyLevelToVRAM
 	ld a, [$d06b]
 	xor a
-	ld [$ff8c], a
+	ld [H_DRAW_FLAGS], a
 	pop de
 	pop bc
 	ret
@@ -370,13 +376,16 @@ Func1e2e:
 
 INCBIN "baserom.gb",$1e48,$1ee3-$1e48
 
+; level data is stored in blocks
+; 2 bytes - address in VRAM
+; 4 bytes - actual tiles
 CopyLevelToVRAM:
-	ld a, [$ff8c]
+	ld a, [H_DRAW_FLAGS]
 	bit 6, a
 	ret z
 	bit 5, a
 	ret z
-	ld bc, $cb00
+	ld bc, W_LEVEL_FRAME
 .copy_loop:
 	ld a, [bc]
 	inc bc
@@ -405,7 +414,7 @@ CopyLevelToVRAM:
 INCBIN "baserom.gb",$1f08,$1fb2-$1f08
 
 UpdateHUD:
-	ld hl, $ff8c
+	ld hl, H_DRAW_FLAGS
 	bit 5, [hl]
 	ret nz
 	ld hl, $ff90
