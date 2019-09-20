@@ -67,7 +67,43 @@ Start:
 	call InitWRAMRoutine
 	call Func4b30
 
-INCBIN "baserom.gb",$174,$193b-$174
+INCBIN "baserom.gb",$174,$1352-$174
+
+Func1352:
+	push bc
+	push hl
+	ld hl, $9800
+	ld a, [$d057]
+	srl a
+	srl a
+	srl a
+	ld [$d06e], a
+	ld a, [$d058]
+	srl a
+	srl a
+	srl a
+	jr z, .lab1375
+	ld bc, $20
+.lab1371:
+	add hl, bc
+	dec a
+	jr nz, .lab1371
+.lab1375:
+	ld b, 0
+	ld a, [$d06e]
+	ld c, a
+	add hl, bc
+	ld a, h
+	ld [de], a
+	inc de
+	ld a, l
+	ld [de], a
+	inc de
+	pop hl
+	pop bc
+	ret
+
+INCBIN "baserom.gb",$1385,$193b-$1385
 
 FillSomethingWithZeroes: ;TODO: why??
 	ld a, [$d096]
@@ -237,7 +273,41 @@ Func1e2e:
 	ld [hl], a
 	ret
 
-INCBIN "baserom.gb",$1e48,$1fb2-$1e48
+INCBIN "baserom.gb",$1e48,$1ee3-$1e48
+
+CopyLevelToVRAM:
+	ld a, [$ff8c]
+	bit 6, a
+	ret z
+	bit 5, a
+	ret z
+	ld bc, $cb00
+.copy_loop:
+	ld a, [bc]
+	inc bc
+	ld h, a
+	and a
+	ret z
+	ld a, [bc]
+	inc bc
+	ld l, a
+	ld a, [bc]
+	inc bc
+	ldi [hl], a
+	ld a, [bc]
+	inc bc
+	ld [hl], a
+	ld a, [bc]
+	inc bc
+	ld de, $1f
+	add hl, de
+	ldi [hl], a
+	ld a, [bc]
+	inc bc
+	ld [hl], a
+	jr .copy_loop
+
+INCBIN "baserom.gb",$1f08,$1fb2-$1f08
 
 UpdateHUD:
 	ld hl, $ff8c
