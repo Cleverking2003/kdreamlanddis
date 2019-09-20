@@ -69,6 +69,42 @@ Start:
 
 INCBIN "baserom.gb",$174,$1352-$174
 
+;Func131a:
+;	push bc
+;	push hl
+;	ld l, a
+;	ld h, 0
+;	add hl, hl
+;	add hl, hl
+;	ld bc, $c600
+;	add hl, bc
+;	ld a, [$d057]
+;	ld [$d06b], a
+;	ld a, [$d058]
+;	ld [$d06c], a
+;	ld [$d07f], a
+;	call Func1352
+;	inc de
+;	ldi a, [hl]
+;	ld [de], a
+;	inc de
+;	ldi a, [hl]
+;	ld [de], a
+;	inc de
+;	ldi a, [hl]
+;	ld [de], a
+;	inc de
+;	ld a, [hl]
+;	ld [de], a
+;	inc de
+;	ld a, [$d06b]
+;	ld [$d057], a
+;	ld a, [$d06c]
+;	ld [$d058], a
+;	pop hl
+;	pop bc
+;	ret
+
 Func1352:
 	push bc
 	push hl
@@ -132,7 +168,66 @@ FillSomethingWithZeroes: ;TODO: why??
 	jr nZ, .lab195d
 	ret
 
-INCBIN "baserom.gb",$1964,$1c6b-$1964
+Func1964:
+	push bc
+	push de
+	xor a
+	ld [$d057], a
+	ld [$d058], a
+	ld de, $cb00
+	ld a, $a
+	ld b, a
+.lab1973:
+	ld a, [$d03f]
+	cp $a
+	jr z, .lab197c
+	ld a, $b
+.lab197c:
+	ld c, a
+.lab197d:
+	ldi a, [hl]
+	call $131a
+	ld a, [$d057]
+	add $10
+	ld [$d057], a
+	dec c
+	jr nz, .lab197d
+	push bc
+	ld b, 0
+	ld a, [$d03f]
+	sub $a
+	jr z, .lab1998
+	sub 1
+.lab1998:
+	ld c, a
+	add hl, bc
+	pop bc
+	xor a
+	ld [$d057], a
+	ld a, [$d058]
+	add $10
+	ld [$d058], a
+	dec b
+	jr nz, .lab1973
+	xor a
+	ld [de], a
+	ld [$d057], a
+	ld [$d058], a
+	xor a
+	ld [SCX], a
+	ld [SCY], a
+	ld a, [$ff8c]
+	or $60
+	ld [$ff8c], a
+	call CopyLevelToVRAM
+	ld a, [$d06b]
+	xor a
+	ld [$ff8c], a
+	pop de
+	pop bc
+	ret
+
+INCBIN "baserom.gb",$19c9,$1c6b-$19c9
 
 ; Get digits of a 
 ; c - hundreds, b - tens, a - ones
