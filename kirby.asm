@@ -493,15 +493,17 @@ UpdateHUD:
 
 INCBIN "baserom.gb",$2070,$20da-$2070
 
-;TODO: what's this?
-Func20da:
+; Some kind of decompression
+; hl - source
+; d098, d097 - destination
+Decompress:
 	ld a, e
 	ld [$d097], a
 	ld a, d
 	ld [$d098], a
-.lab20e2:
+.read_flag:
 	ld a, [hl]
-	cp $ff
+	cp $ff ; end byte
 	ret z
 	and $e0
 	cp $e0
@@ -538,55 +540,53 @@ Func20da:
 	jr z, .lab2124
 .lab210f:
 	cp $40
-	jr z, .lab2131
+	jr z, .copy_loop2
 .lab2113:
 	cp $60
 	jr z, .lab2146
-.lab2117:
+.copy_loop_by1:
 	dec c
-	jr nz, .lab211e
-.lab211a:
+	jr nz, .copy_byte
 	dec b
-	jp z, .lab20e2
-.lab211e:
+	jp z, .read_flag
+.copy_byte:
 	ldi a, [hl]
 	call $d099
-	jr .lab2117
+	jr .copy_loop_by1
 .lab2124:
 	ldi a, [hl]
 .lab2125:
 	dec c
 	jr nz, .lab212c
-.lab2128:
 	dec b
-	jp z, .lab20e2
+	jp z, .read_flag
 .lab212c:
 	call $d099
 	jr .lab2125
-.lab2131:
+.copy_loop_by2:
 	dec c
-	jr nz, .lab2138
+	jr nz, .copy_2bytes
 .lab2134:
 	dec b
 	jp z, .lab2142
-.lab2138:
+.copy_2bytes:
 	ldi a, [hl]
 	call $d099
 	ldd a, [hl]
 	call $d099
-	jr .lab2131
+	jr .copy_loop_by2
 .lab2142:
 	inc hl
 	inc hl
-	jr .lab20e2
-.lab2146:
+	jr .read_flag
+.copy_inc:
 	ldi a, [hl]
 .lab2147:
 	dec c
 	jr nz, .lab214e
 .lab214a:
 	dec b
-	jp z, .lab20e2
+	jp z, .read_flag
 .lab214e:
 	call $d099
 	inc a
@@ -659,7 +659,7 @@ Func20da:
 	pop hl
 	inc hl
 	inc hl
-	jp .lab20e2
+	jp .read_flag
 
 INCBIN "baserom.gb", $21a5, $21bb-$21a5
 
