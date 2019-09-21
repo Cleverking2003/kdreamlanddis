@@ -3,6 +3,7 @@ MBC1_BANK EQU $2100
 W_LEVEL EQU $c600
 W_LEVEL_FRAME EQU $cb00
 W_CURBANK EQU $d02c
+W_FRAME_SIZE EQU $d03f
 W_COPY_COUNT EQU $d057
 W_HP EQU $d086
 W_HP_MAX EQU $d087
@@ -23,7 +24,7 @@ H_DMA_ROUTINE EQU $ff80
 H_DRAW_FLAGS EQU $ff8c
 ;HUD flags:
 ;bit 7 - boss hp & indicator (instead of score and sc)
-;bit 4 - Kirby;s lifes
+;bit 4 - Kirby's lifes
 ;bit 2 - Kirby's hp
 ;bit 1 - 'Sc:' text
 ;bit 0 - score
@@ -56,11 +57,11 @@ jp Start
 
 SECTION "game", ROM0[$150]
 Start:
-	ld a, [$ff44]
+	ld a, [LY]
 	cp $91
 	jr C, Start
 	xor a
-	ld [$ff40], a
+	ld [LCDC], a
 	di
 	ld sp, H_STACK
 	ld a, 5
@@ -75,7 +76,7 @@ Start:
 INCBIN "baserom.gb",$174,$131a-$174
 
 ; a - offset from $c600 div 4
-; copies 4 bytes to de
+; copies level block to de
 CopyLevelBlock:
 	push bc
 	push hl
@@ -174,6 +175,7 @@ FillSomethingWithZeroes: ;TODO: why??
 	jr nZ, .lab195d
 	ret
 
+; hl - pointer to block
 CopyLevelFrame:
 	push bc
 	push de
@@ -184,7 +186,7 @@ CopyLevelFrame:
 	ld a, $a
 	ld b, a
 .copy_loop:
-	ld a, [$d03f]
+	ld a, [W_FRAME_SIZE]
 	cp $a
 	jr z, .last_blocks
 	ld a, $b
@@ -200,7 +202,7 @@ CopyLevelFrame:
 	jr nz, .copy_blocks
 	push bc
 	ld b, 0
-	ld a, [$d03f]
+	ld a, [W_FRAME_SIZE]
 	sub $a
 	jr z, .last2
 	sub 1
@@ -259,7 +261,7 @@ VBlankHandler:
 	push bc
 	push de
 	push hl
-	ld hl, $ff8c
+	ld hl, H_DRAW_FLAGS
 	bit 6, [hl]
 	jp z, .lab1d9d
 	ld hl, $ff91
@@ -275,9 +277,9 @@ VBlankHandler:
 	call $1ee3
 	call $1e2e
 	call H_DMA_ROUTINE
-	ld a, [$ff8c]
+	ld a, [H_DRAW_FLAGS]
 	and $9f
-	ld [$ff8c], a
+	ld [H_DRAW_FLAGS], a
 	call $1dfb
 	call $1f08
 	call $68e
