@@ -52,6 +52,8 @@ SCY EQU $ff42
 SCX EQU $ff43
 ; Scanline
 LY EQU $ff44
+; DMA
+DMA EQU $ff46
 
 ; HRAM
 ; DMA OAM routine

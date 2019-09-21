@@ -501,14 +501,13 @@ Decompress:
 	ld [$d097], a
 	ld a, d
 	ld [$d098], a
-.read_flag:
+.read_flags:
 	ld a, [hl]
 	cp $ff ; end byte
 	ret z
 	and $e0
 	cp $e0
-	jr nz, .lab20fc
-.lab20ec:
+	jr nz, .flags_ready
 	ld a, [hl]
 	add a
 	add a
@@ -521,77 +520,72 @@ Decompress:
 	ldi a, [hl]
 	ld c, a
 	inc bc
-	jr .lab2104
-.lab20fc:
+	jr .check_flags
+.flags_ready:
 	push af
 	ldi a, [hl]
 	and $1f
 	ld c, a
 	ld b, 0
 	inc c
-.lab2104:
+.check_flags:
 	inc b
 	inc c
 	pop af
 	bit 7, a
-	jr nz, .lab2154
-.lab210b:
+	jr nz, .flag_offset
 	cp $20
-	jr z, .lab2124
-.lab210f:
+	jr z, .copy_same
 	cp $40
-	jr z, .copy_loop2
-.lab2113:
+	jr z, .copy_loop_by2
 	cp $60
-	jr z, .lab2146
+	jr z, .copy_inc
 .copy_loop_by1:
 	dec c
 	jr nz, .copy_byte
 	dec b
-	jp z, .read_flag
+	jp z, .read_flags
 .copy_byte:
 	ldi a, [hl]
 	call $d099
 	jr .copy_loop_by1
-.lab2124:
+.copy_same:
 	ldi a, [hl]
-.lab2125:
+.copy_same_loop:
 	dec c
-	jr nz, .lab212c
+	jr nz, .copy_same_byte
 	dec b
-	jp z, .read_flag
-.lab212c:
+	jp z, .read_flags
+.copy_same_byte:
 	call $d099
-	jr .lab2125
+	jr .copy_same_loop
 .copy_loop_by2:
 	dec c
 	jr nz, .copy_2bytes
-.lab2134:
 	dec b
-	jp z, .lab2142
+	jp z, .copy_by2_done
 .copy_2bytes:
 	ldi a, [hl]
 	call $d099
 	ldd a, [hl]
 	call $d099
 	jr .copy_loop_by2
-.lab2142:
+.copy_by2_done:
 	inc hl
 	inc hl
-	jr .read_flag
+	jr .read_flags
 .copy_inc:
 	ldi a, [hl]
-.lab2147:
+.copy_inc_loop:
 	dec c
-	jr nz, .lab214e
-.lab214a:
+	jr nz, .copy_inc_byte
 	dec b
-	jp z, .read_flag
-.lab214e:
+	jp z, .read_flags
+.copy_inc_byte:
 	call $d099
 	inc a
-	jr .lab2147
-.lab2154:
+	jr .copy_inc_loop
+.flag_offset:
 	push hl
 	push af
 	ldi a, [hl]
@@ -605,61 +599,55 @@ Decompress:
 	ld h, a
 	pop af
 	cp $80
-	jr z, .lab2170
-.lab2168:
+	jr z, .copy_by1_off
 	cp $a0
-	jr z, .lab217b
-.lab216c:
+	jr z, .copy_off_rot
 	cp $c0
-	jr z, .lab2193
-.lab2170:
+	jr z, .copy_off_reverse
+.copy_by1_off:
 	dec c
-	jr nz, .lab2176
-.lab2173:
+	jr nz, .copy_by1_off_byte
 	dec b
-	jr z, .lab219f
-.lab2176:
+	jr z, .off_complete
+.copy_by1_off_byte:
 	ldi a, [hl]
 	ld [de], a
 	inc de
-	jr .lab2170
-.lab217b:
+	jr .copy_by1_off
+.copy_off_rot:
 	dec c
-	jr nz, .lab2182
-.lab217e:
+	jr nz, .copy_off_rot_load
 	dec b
-	jp z, .lab219f
-.lab2182:
+	jp z, .off_complete
+.copy_off_rot_load:
 	ldi a, [hl]
 	push bc
 	ld bc, 8
-.lab2187:
+.copy_off_rot_loop:
 	rra
 	rl b
 	dec c
-	jr nz, .lab2187
-.lab218d:
+	jr nz, .copy_off_rot_loop
 	ld a, b
 	pop bc
 	ld [de], a
 	inc de
-	jr .lab217b
-.lab2193:
+	jr .copy_off_rot
+.copy_off_reverse:
 	dec c
-	jr nz, .lab219a
-.lab2196:
+	jr nz, .copy_reverse
 	dec b
-	jp z, .lab219f
-.lab219a:
+	jp z, .off_complete
+.copy_reverse:
 	ldd a, [hl]
 	ld [de], a
 	inc de
-	jr .lab2193
-.lab219f:
+	jr .copy_off_reverse
+.off_complete:
 	pop hl
 	inc hl
 	inc hl
-	jp .read_flag
+	jp .read_flags
 
 INCBIN "baserom.gb", $21a5, $21bb-$21a5
 
@@ -707,7 +695,7 @@ CopyDMARoutine:
 
 DMARoutine:
 	ld a, $c0
-	ld [$ff46], a
+	ld [DMA], a
 	ld a, $28
 .wait_loop:
 	dec a
@@ -765,7 +753,7 @@ MemInit:
 Func4b30:
 	ld hl, $4b3a
 	ld de, $dc00
-	call $20da
+	call Decompress
 	ret
 
 INCBIN "baserom.gb",$14b3a, $4000-$b3a
