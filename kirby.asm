@@ -1,47 +1,5 @@
-;Addresses
-MBC1_BANK EQU $2100
-W_OAM_COPY EQU $c000
-W_LEVEL EQU $c600
-W_LEVEL_FRAME EQU $cb00
-W_CURBANK EQU $d02c
-W_FRAME_SIZE EQU $d03f
-W_COPY_COUNT EQU $d057
-W_HP EQU $d086
-W_HP_MAX EQU $d087
-W_LIFES EQU $d089
-W_SCORE EQU $d08e
-W_BOSS_HP EQU $d093
-W_OAM_OFFSET EQU $d095
-W_HIDE_ALL EQU $d096
-V_SC EQU $9c02
-V_SCORE EQU $9c06
-V_SCORE_ZERO EQU $9c0b
-V_HP_BAR EQU $9c26
-V_LIFES EQU $9c30
-V_LEVEL EQU $9800
-LCDC EQU $ff40
-SCY EQU $ff42
-SCX EQU $ff43
-LY EQU $ff44
-H_DMA_ROUTINE EQU $ff80
-H_DRAW_FLAGS EQU $ff8c
-;HUD flags:
-;bit 7 - boss hp & indicator (instead of score and sc)
-;bit 4 - Kirby's lifes
-;bit 2 - Kirby's hp
-;bit 1 - 'Sc:' text
-;bit 0 - score
-H_HUD_FLAGS EQU $ff8f
-H_STACK EQU $fffe
-
-;Constants
-TILE_HP_SQUARE EQU $68
-TILE_BOSS_HP EQU $69
-TILE_BOSS EQU $6a
-TILE_SC EQU $6c
-TILE_HP_DOT EQU $6e
-TILE_ZERO EQU $72
-TILE_EMPTY EQU $7f
+include "address.asm"
+include "constants.asm"
 
 SECTION "rom0", ROM0
 INCBIN "baserom.gb",0,$40
