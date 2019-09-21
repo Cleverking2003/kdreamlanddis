@@ -1,5 +1,6 @@
 ;Addresses
 MBC1_BANK EQU $2100
+W_OAM_COPY EQU $c000
 W_LEVEL EQU $c600
 W_LEVEL_FRAME EQU $cb00
 W_CURBANK EQU $d02c
@@ -10,6 +11,8 @@ W_HP_MAX EQU $d087
 W_LIFES EQU $d089
 W_SCORE EQU $d08e
 W_BOSS_HP EQU $d093
+W_OAM_OFFSET EQU $d095
+W_HIDE_ALL EQU $d096
 V_SC EQU $9c02
 V_SCORE EQU $9c06
 V_SCORE_ZERO EQU $9c0b
@@ -69,7 +72,7 @@ Start:
 	ld [MBC1_BANK], a ; switch to bank 5
 	call MemInit
 	call CopyDMARoutine
-	call FillSomethingWithZeroes
+	call HideSprites
 	call InitWRAMRoutine
 	call Func4b30
 
@@ -148,31 +151,33 @@ CopyBlockHeader:
 
 INCBIN "baserom.gb",$1385,$193b-$1385
 
-FillSomethingWithZeroes: ;TODO: why??
-	ld a, [$d096]
+; d095 - begin offset
+; d096 - if equals $ff, hide all
+HideSprites:
+	ld a, [W_HIDE_ALL]
 	inc a
-	jr nZ, .lab194d
+	jr nZ, .not_all
 	ld a, $a0
 	ld c, a
 	ld [$d096], a
 	xor a
 	ld [$d095], a
-	jr .lab1955
-.lab194d:
-	ld a, [$d095]
-	ld [$d096], a
+	jr .set_regs
+.not_all:
+	ld a, [W_OAM_OFFSET]
+	ld [W_HIDE_ALL], a
 	ld c, $a0
-.lab1955:
+.set_regs:
 	ld l, a
 	ld h, $c0
 	ld de, 4
 	ld b, 0
-.lab195d:
+.hide_loop:
 	ld [hl], b
 	add hl, de
 	ld a, l
 	cp c
-	jr nZ, .lab195d
+	jr nZ, .hide_loop
 	ret
 
 ; hl - pointer to block
@@ -274,8 +279,8 @@ VBlankHandler:
 	ld hl, $d032
 	inc [hl]
 	call UpdateHUD
-	call $1ee3
-	call $1e2e
+	call CopyLevelToVRAM
+	call Func1e2e
 	call H_DMA_ROUTINE
 	ld a, [H_DRAW_FLAGS]
 	and $9f
