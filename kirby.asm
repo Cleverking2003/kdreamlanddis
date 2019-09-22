@@ -33,8 +33,12 @@ Start:
 	call HideSprites
 	call InitWRAMRoutine
 	call Func4b30
+	ld a, 5
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a
+	call InitSound
 
-INCBIN "baserom.gb",$174,$131a-$174
+INCBIN "baserom.gb",$17f,$131a-$17f
 
 ; a - offset from $c600 div 4
 ; copies level block to de
@@ -491,7 +495,21 @@ UpdateHUD:
 	ld [V_LIFES], a
 	ret
 
-INCBIN "baserom.gb",$2070,$20da-$2070
+INCBIN "baserom.gb",$2070,$20c1-$2070
+
+; c - bank to switch to
+SwitchAndDecompress:
+	ld a, [W_CURBANK]
+	push af
+	ld a, c
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a
+	ld [MBC1_BANK], a
+	call Decompress
+	pop af
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a
+	ret
 
 ; Some kind of decompression
 ; hl - source
@@ -756,7 +774,48 @@ Func4b30:
 	call Decompress
 	ret
 
-INCBIN "baserom.gb",$14b3a, $4000-$b3a
+INCBIN "baserom.gb",$14b3a, $c4a-$b3a
+
+InitSound:
+	ld a, $80
+	ld [SND_POW], a
+	ld a, $77
+	ld [SND_CH], a
+	ld a, $ff
+	ld [SND_SEL], a
+	ld a, $ff
+	ld [$de01], a
+	ld [$de02], a
+	ld [$ded2], a
+	ld hl, $de06
+	ld b, $14
+	ld a, $aa
+.copy_loop:
+	ldi [hl], a
+	dec b
+	jr nz, .copy_loop
+	ld hl, $7aa9
+	call $5305
+	ld a, $ff
+	call $4dc5
+	ld a, $ff
+	call $4c9e
+	call $4e76
+	ld hl, $ff14
+	set 7, [hl]
+	ld hl, $ff19
+	set 7, [hl]
+	ld hl, $ff1e
+	set 7, [hl]
+	ld hl, $ff23
+	set 7, [hl]
+	ld a, $13
+	ld [$ded3], a
+	ld a, $24
+	ld [$ded4], a
+	ret
+
+INCBIN "baserom.gb", $14c9e, $4000-$c9e
 
 SECTION "rom6", ROMX,BANK[6]
 INCBIN "baserom.gb",$18000,$4000

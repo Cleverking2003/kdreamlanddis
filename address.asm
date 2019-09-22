@@ -45,6 +45,12 @@ V_LIFES EQU $9c30
 V_LEVEL EQU $9800
 
 ; IO regs
+; Channel control
+SND_CH EQU $ff24
+; Sound terminal selection
+SND_SEL EQU $ff25
+; Sound on/off
+SND_POW EQU $ff26
 ; LCD control
 LCDC EQU $ff40
 ; Scroll y, x
