@@ -64,8 +64,13 @@ Start:
 	ld a, 6
 	ld [W_CURBANK], a
 	ld [MBC1_BANK], a
+	ld a, 5
+	ld [$d08a], a
+	ld a, 6
+	ld [$d088], a
+	call $4000
 
-INCBIN "baserom.gb",$1ba,$131a-$1ba
+INCBIN "baserom.gb",$1c7,$131a-$1c7
 
 ; a - offset from $c600 div 4
 ; copies level block to de
@@ -854,7 +859,51 @@ InitSound:
 INCBIN "baserom.gb", $14c9e, $4000-$c9e
 
 SECTION "rom6", ROMX,BANK[6]
-INCBIN "baserom.gb",$18000,$4000
+
+Func06_4000:
+	ld a, $ff
+	ld [$d096], a
+	call HideSprites
+	call $1e74
+	xor a
+	ld [$d095], a
+	ld [$d053], a
+	ld [$d081], a
+	ld [$d080], a
+	ld a, 0
+	ld [$d055], a
+	ld hl, $4000
+	ld de, $8000
+	ld c, 2
+	call SwitchAndDecompress
+	ld hl, $4000
+	ld de, $8800
+	ld c, $a
+	call SwitchAndDecompress
+        ld hl, $42ac
+        ld de, $9000
+        ld c, $a
+        call SwitchAndDecompress
+        ld hl, $77e9
+        ld de, $8e00
+        ld c, $2
+        call SwitchAndDecompress
+        ld hl, $4000
+        ld de, $9800
+        ld c, $3
+        call SwitchAndDecompress
+	ld a, 5
+	call $1eb4
+	ld a, 1
+	call $21fb
+	call $1e67
+	xor a
+	ld [$ff90], a
+	ld a, 4
+	ld [H_HUD_FLAGS], a
+
+INCBIN "baserom.gb",$1806a,$4000-$6a
+
 SECTION "rom7", ROMX,BANK[7]
 INCBIN "baserom.gb",$1c000,$4000
 SECTION "rom8", ROMX,BANK[8]
