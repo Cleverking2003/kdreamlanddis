@@ -1,6 +1,13 @@
 include "address.asm"
 include "constants.asm"
 
+ldHigh: macro
+	db $ea, \1, $ff
+	endm
+ldFromHigh: macro
+	db $fa, \1, $ff
+	endm
+
 SECTION "rom0", ROM0
 INCBIN "baserom.gb",0,$40
 
@@ -732,8 +739,12 @@ INCBIN "baserom.gb",$21ce,$4000-$21ce
 SECTION "rom1", ROMX,BANK[1]
 INCBIN "baserom.gb",$4000,$4000
 SECTION "rom2", ROMX,BANK[2]
-INCBIN "baserom.gb",$8000,$4000
+MainTiles:
+INCBIN "baserom.gb",$8000,$37e9
+Font:
+INCBIN "baserom.gb",$b7e9,$4000-$37e9
 SECTION "rom3", ROMX,BANK[3]
+TitleMap:
 INCBIN "baserom.gb",$c000,$4000
 SECTION "rom4", ROMX,BANK[4]
 INCBIN "baserom.gb",$10000,$4000
@@ -794,9 +805,9 @@ MemInit:
 	ld a, $d0
         ld [$d081], a
 	ld a, $c0
-	DB $ea, $8c, $ff ;ld [$ff8c], a ;rgbasm can't assemble this properly
+	ldHigh $8c ;ld [$ff8c], a
 	ld a, 0
-	DB $ea, $8d, $ff ;ld [$ff8d], a
+	ldHigh $8d ;ld [$ff8d], a
 	ld a, $c
         ld [$d050], a
 	ld a, 1
@@ -860,7 +871,7 @@ INCBIN "baserom.gb", $14c9e, $4000-$c9e
 
 SECTION "rom6", ROMX,BANK[6]
 
-Func06_4000:
+LoadTitleScreen:
 	ld a, $ff
 	ld [$d096], a
 	call HideSprites
@@ -872,25 +883,25 @@ Func06_4000:
 	ld [$d080], a
 	ld a, 0
 	ld [$d055], a
-	ld hl, $4000
+	ld hl, MainTiles
 	ld de, $8000
-	ld c, 2
+	ld c, bank(MainTiles)
 	call SwitchAndDecompress
-	ld hl, $4000
+	ld hl, TitleKirby
 	ld de, $8800
-	ld c, $a
+	ld c, bank(TitleKirby)
 	call SwitchAndDecompress
-        ld hl, $42ac
+        ld hl, GameLogo
         ld de, $9000
-        ld c, $a
+        ld c, bank(GameLogo)
         call SwitchAndDecompress
-        ld hl, $77e9
+        ld hl, Font
         ld de, $8e00
-        ld c, $2
+        ld c, bank(Font)
         call SwitchAndDecompress
-        ld hl, $4000
+        ld hl, TitleMap
         ld de, $9800
-        ld c, $3
+        ld c, bank(TitleMap)
         call SwitchAndDecompress
 	ld a, 5
 	call $1eb4
@@ -898,11 +909,35 @@ Func06_4000:
 	call $21fb
 	call $1e67
 	xor a
-	ld [$ff90], a
+	ldHigh $90
 	ld a, 4
-	ld [H_HUD_FLAGS], a
+	ldHigh $8f
+	call $40a0
+	ld a, 1
+	call $1dc3
+	call $670
+	ld a, 8
+	ld [$d050], a
+.lab407a:
+	ld a, 1
+	call $1dc3
+	ldFromHigh $8b
+	cp $86
+	jp z, $6386
+	cp $45
+	jr nz, .lab4093
+	ld a, 1
+	ld [$d03a], a
+	call $40a0
+.lab4093:
+	ldFromHigh $8b
+	and 8
+	jr z, .lab407a
+	ld a, $1b
+	call $1e96
+	ret
 
-INCBIN "baserom.gb",$1806a,$4000-$6a
+INCBIN "baserom.gb",$180a0,$4000-$a0
 
 SECTION "rom7", ROMX,BANK[7]
 INCBIN "baserom.gb",$1c000,$4000
@@ -911,7 +946,10 @@ INCBIN "baserom.gb",$20000,$4000
 SECTION "rom9", ROMX,BANK[9]
 INCBIN "baserom.gb",$24000,$4000
 SECTION "roma", ROMX,BANK[$a]
-INCBIN "baserom.gb",$28000,$4000
+TitleKirby:
+INCBIN "baserom.gb",$28000,$2ac
+GameLogo:
+INCBIN "baserom.gb",$282ac,$4000-$2ac
 SECTION "romb", ROMX,BANK[$b]
 INCBIN "baserom.gb",$2c000,$4000
 SECTION "romc", ROMX,BANK[$c]
