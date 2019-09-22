@@ -495,7 +495,7 @@ INCBIN "baserom.gb",$2070,$20da-$2070
 
 ; Some kind of decompression
 ; hl - source
-; d098, d097 - destination
+; de - destination
 Decompress:
 	ld a, e
 	ld [$d097], a
