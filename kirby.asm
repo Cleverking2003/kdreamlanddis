@@ -37,8 +37,35 @@ Start:
 	ld [W_CURBANK], a
 	ld [MBC1_BANK], a
 	call InitSound
+	ld a, 1
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a
+	call InitWindow
+	ld a, $e4
+	ld [OBP1], a
+	ld a, 8
+	ld [SCY], a
+	ld [$d055], a
+	xor a
+	ld [SCX], a
+	ld [$d053], a
+	ld [INTF], a
+	ld a, $40
+	ld [STAT], a
+	ld a, $e7
+	ld [$ff8a], a
+	ld [LCDC], a
+	ld a, 5
+	ld [INTE], a
+	ei 
+	xor a
+	ld [H_DRAW_FLAGS], a
+	ld [$d03a], a
+	ld a, 6
+	ld [W_CURBANK], a
+	ld [MBC1_BANK], a
 
-INCBIN "baserom.gb",$17f,$131a-$17f
+INCBIN "baserom.gb",$1ba,$131a-$1ba
 
 ; a - offset from $c600 div 4
 ; copies level block to de
@@ -202,7 +229,16 @@ CopyLevelFrame:
 	pop bc
 	ret
 
-INCBIN "baserom.gb",$19c9,$1c6b-$19c9
+INCBIN "baserom.gb",$19c9,$1c01-$19c9
+
+InitWindow:
+	ld a, $a0
+	ld [WX], a
+	ld a, $90
+	ld [WY], a
+	ret
+
+INCBIN "baserom.gb",$1c0a,$1c6b-$1c0a
 
 ; Get digits of a 
 ; c - hundreds, b - tens, a - ones

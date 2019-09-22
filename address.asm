@@ -45,6 +45,8 @@ V_LIFES EQU $9c30
 V_LEVEL EQU $9800
 
 ; IO regs
+; Interrupt flags
+INTF EQU $ff0f
 ; Channel control
 SND_CH EQU $ff24
 ; Sound terminal selection
@@ -53,6 +55,8 @@ SND_SEL EQU $ff25
 SND_POW EQU $ff26
 ; LCD control
 LCDC EQU $ff40
+; LCD status
+STAT EQU $ff41
 ; Scroll y, x
 SCY EQU $ff42
 SCX EQU $ff43
@@ -60,6 +64,16 @@ SCX EQU $ff43
 LY EQU $ff44
 ; DMA
 DMA EQU $ff46
+; BG palette
+BGP EQU $ff47
+; Object palletes
+OBP0 EQU $ff48
+OBP1 EQU $ff49
+; Window y/x
+WY EQU $ff4a
+WX EQU $ff4b
+; Interrupt enable
+INTE EQU $ffff
 
 ; HRAM
 ; DMA OAM routine
