@@ -328,12 +328,12 @@ VBlankHandler:
 	ld a, [hDrawFlags]
 	and $9f
 	ld [hDrawFlags], a
-	call $1dfb
+	call UpdateScrRegs
 	call $1f08
 	call $68e
 	jr .lab1d56
 .lab1d53:
-	call $1dfb
+	call UpdateScrRegs
 .lab1d56:
 	ld hl, $ff91
 	res 3, [hl]
@@ -382,9 +382,9 @@ VBlankHandler:
 	jr nz, .lab1d9f
 	jr .lab1d53
 .lab1da4:
-	ld a, [$d053]
+	ld a, [wScx]
 	ld [rSCX], a
-	ld a, [$d055]
+	ld a, [wScy]
 	ld [rSCY], a
 	ld hl, wLevelFrame
 .lab1db1:
@@ -402,7 +402,20 @@ VBlankHandler:
 	res 2, [hl]
 	jr .lab1d53
 
-INCBIN "baserom.gb",$1dc3,$1e2e-$1dc3
+INCBIN "baserom.gb",$1dc3,$1dfb-$1dc3
+
+UpdateScrRegs:
+	ld a, [hLcdc]
+	ld [rLCDC], a
+	ld a, [wScx]
+	ld [rSCX], a
+	ld a, [wScy]
+	ld [rSCY], a
+	ld a, [wBgPal]
+	ld [rBGP], a
+	ret
+
+incbin "baserom.gb",$1e0f,$1e2e-$1e0f
 
 Func1e2e:
 	ld hl, $ff96

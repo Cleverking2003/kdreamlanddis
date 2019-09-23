@@ -13,8 +13,13 @@ wLevelFrame EQU $cb00
 wCurBank EQU $d02c
 ; Size of level frame
 wFrameSize EQU $d03f
+; Updated SCX/SCY
+wScx equ $d053
+wScy equ $d055
 ; Level frame copy counter
 wCopyCount EQU $d057
+; Updated BG palette
+wBgPal equ $d080
 ; Kirby's hp
 wHp EQU $d086
 ; Max Kirby's hp
@@ -86,6 +91,8 @@ rIE EQU $ffff
 ; HRAM
 ; DMA OAM routine
 hDmaRoutine EQU $ff80
+; Updated LCDC
+hLcdc equ $ff8a
 ; Screen update flags
 hDrawFlags EQU $ff8c
 ; HUD update flags:
