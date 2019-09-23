@@ -33,14 +33,20 @@ wHideAll EQU $d096
 wWramRoutine equ $d099
 
 ; VRAM
+; HUD
+vHud equ $9c00
 ; 'Sc:' text 
 vSc EQU $9c02
 ; Score display
 vScore EQU $9c06
 ; Score's last digit (0)
 vScoreZero EQU $9c0b
+; 'Kirby' text
+vKirbyText equ $9c22
 ; Kirby's hp bar
 vHpBar EQU $9c26
+; Life icon
+vLifeIcon equ $9c2e
 ; Kirby's lifes
 vLifes EQU $9c30
 ; Level frame

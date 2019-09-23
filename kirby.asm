@@ -79,7 +79,7 @@ Start:
 
 INCBIN "baserom.gb",$1c7,$131a-$1c7
 
-; a - offset from $c600 div 4
+; a - offset from wLevel div 4
 ; copies level block to de
 CopyLevelBlock:
 	push bc
@@ -250,7 +250,40 @@ InitWindow:
 	ld [rWY], a
 	ret
 
-INCBIN "baserom.gb",$1c0a,$1c6b-$1c0a
+HudInit:
+	call $1e74
+	ld c, $40
+	ld hl, vHud
+	ld a, TILE_EMPTY
+.clear_loop:
+	ldi [hl], a
+	dec c
+	jr nz, .clear_loop
+	ld a, 7
+	ld [$ff4b], a
+	ld a, $80
+	ld [$ff4a], a
+	ld a, TILE_LIFE_ICON
+	ld [vLifeIcon], a
+	ld a, TILE_LIFE_CROSS
+	ld [vLifeIcon+1], a
+	ld a, TILE_KIRBY_TEXT
+	ld [vKirbyText], a
+	ld a, TILE_KIRBY_TEXT+1
+	ld [vKirbyText+1], a
+	inc a
+	ld [vKirbyText+2], a
+	ld a, TILE_EMPTY
+	ld [vScore], a
+	ld [vScore+1], a
+	ld [vScore+2], a
+	ld [vScore+3], a
+	ld [vScore+4], a
+	ld [vLifes], a
+	ld [vLifes+1], a
+	jp $1e67
+
+INCBIN "baserom.gb",$1c52,$1c6b-$1c52
 
 ; Get digits of a 
 ; c - hundreds, b - tens, a - ones
@@ -353,7 +386,7 @@ VBlankHandler:
 	ld [rSCX], a
 	ld a, [$d055]
 	ld [rSCY], a
-	ld hl, $cb00
+	ld hl, wLevelFrame
 .lab1db1:
 	ldi a, [hl]
 	and a
@@ -877,7 +910,7 @@ LoadTitleScreen:
 	call HideSprites
 	call $1e74
 	xor a
-	ld [$d095], a
+	ld [wOamOffset], a
 	ld [$d053], a
 	ld [$d081], a
 	ld [$d080], a
@@ -900,7 +933,7 @@ LoadTitleScreen:
         ld c, bank(Font)
         call SwitchAndDecompress
         ld hl, TitleMap
-        ld de, $9800
+        ld de, vLevel
         ld c, bank(TitleMap)
         call SwitchAndDecompress
 	ld a, 5
