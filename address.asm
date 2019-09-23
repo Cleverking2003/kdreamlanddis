@@ -1,92 +1,94 @@
 ; Addresses
 ; MBC1 regs
-MBC1_BANK EQU $2100
+mbcBank EQU $2100
 
 ; WRAM
 ; OAM is copied from here
-W_OAM_COPY EQU $c000
+wOamCopy EQU $c000
 ; Full level is stored here
-W_LEVEL EQU $c600
+wLevel EQU $c600
 ; Level frame is copied from here
-W_LEVEL_FRAME EQU $cb00
+wLevelFrame EQU $cb00
 ; Current bank
-W_CURBANK EQU $d02c
+wCurBank EQU $d02c
 ; Size of level frame
-W_FRAME_SIZE EQU $d03f
+wFrameSize EQU $d03f
 ; Level frame copy counter
-W_COPY_COUNT EQU $d057
+wCopyCount EQU $d057
 ; Kirby's hp
-W_HP EQU $d086
+wHp EQU $d086
 ; Max Kirby's hp
-W_HP_MAX EQU $d087
+wHpMax EQU $d087
 ; Kirby's lifes
-W_LIFES EQU $d089
+wLifes EQU $d089
 ; Score
-W_SCORE EQU $d08e
+wScore EQU $d08e
 ; Boss' hp
-W_BOSS_HP EQU $d093
+wBossHp EQU $d093
 ; Hide sprites from this address
-W_OAM_OFFSET EQU $d095
+wOamOffset EQU $d095
 ; Hide all sprites if this = $ff
-W_HIDE_ALL EQU $d096
+wHideAll EQU $d096
+; Routine, which imitates 'ldi [de], a'
+wWramRoutine equ $d099
 
 ; VRAM
 ; 'Sc:' text 
-V_SC EQU $9c02
+vSc EQU $9c02
 ; Score display
-V_SCORE EQU $9c06
+vScore EQU $9c06
 ; Score's last digit (0)
-V_SCORE_ZERO EQU $9c0b
+vScoreZero EQU $9c0b
 ; Kirby's hp bar
-V_HP_BAR EQU $9c26
+vHpBar EQU $9c26
 ; Kirby's lifes
-V_LIFES EQU $9c30
+vLifes EQU $9c30
 ; Level frame
-V_LEVEL EQU $9800
+vLevel EQU $9800
 
 ; IO regs
 ; Interrupt flags
-INTF EQU $ff0f
+rIF EQU $ff0f
 ; Channel control
-SND_CH EQU $ff24
+rSNDCH EQU $ff24
 ; Sound terminal selection
-SND_SEL EQU $ff25
+rSNDSEL EQU $ff25
 ; Sound on/off
-SND_POW EQU $ff26
+rSNDPOW EQU $ff26
 ; LCD control
-LCDC EQU $ff40
+rLCDC EQU $ff40
 ; LCD status
-STAT EQU $ff41
+rSTAT EQU $ff41
 ; Scroll y, x
-SCY EQU $ff42
-SCX EQU $ff43
+rSCY EQU $ff42
+rSCX EQU $ff43
 ; Scanline
-LY EQU $ff44
+rLY EQU $ff44
 ; DMA
-DMA EQU $ff46
+rDMA EQU $ff46
 ; BG palette
-BGP EQU $ff47
+rBGP EQU $ff47
 ; Object palletes
-OBP0 EQU $ff48
-OBP1 EQU $ff49
+rOBP0 EQU $ff48
+rOBP1 EQU $ff49
 ; Window y/x
-WY EQU $ff4a
-WX EQU $ff4b
+rWY EQU $ff4a
+rWX EQU $ff4b
 ; Interrupt enable
-INTE EQU $ffff
+rIE EQU $ffff
 
 ; HRAM
 ; DMA OAM routine
-H_DMA_ROUTINE EQU $ff80
+hDmaRoutine EQU $ff80
 ; Screen update flags
-H_DRAW_FLAGS EQU $ff8c
+hDrawFlags EQU $ff8c
 ; HUD update flags:
 ; bit 7 - boss hp & indicator (instead of score and sc)
 ; bit 4 - Kirby's lifes
 ; bit 2 - Kirby's hp
 ; bit 1 - 'Sc:' text
 ; bit 0 - score
-H_HUD_FLAGS EQU $ff8f
+hHudFlags EQU $ff8f
 ; Stack start
-H_STACK EQU $fffe
+hStack EQU $fffe
 

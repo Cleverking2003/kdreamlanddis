@@ -12,7 +12,7 @@ SECTION "rom0", ROM0
 INCBIN "baserom.gb",0,$40
 
 SECTION "vblankint", ROM0[$40]
-	jp $1d16
+	jp VBlankHandler
 SECTION "lcdcint", ROM0[$48]
 	jp $1e0f
 SECTION "timerint", ROM0[$50]
@@ -25,57 +25,57 @@ jp Start
 
 SECTION "game", ROM0[$150]
 Start:
-	ld a, [LY]
+	ld a, [rLY]
 	cp $91
 	jr C, Start
 	xor a
-	ld [LCDC], a
+	ld [rLCDC], a
 	di
-	ld sp, H_STACK
+	ld sp, hStack
 	ld a, 5
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a ; switch to bank 5
+	ld [wCurBank], a
+	ld [mbcBank], a ; switch to bank 5
 	call MemInit
 	call CopyDMARoutine
 	call HideSprites
 	call InitWRAMRoutine
 	call Func4b30
 	ld a, 5
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a
+	ld [wCurBank], a
+	ld [mbcBank], a
 	call InitSound
 	ld a, 1
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a
+	ld [wCurBank], a
+	ld [mbcBank], a
 	call InitWindow
 	ld a, $e4
-	ld [OBP1], a
+	ld [rOBP1], a
 	ld a, 8
-	ld [SCY], a
+	ld [rSCY], a
 	ld [$d055], a
 	xor a
-	ld [SCX], a
+	ld [rSCX], a
 	ld [$d053], a
-	ld [INTF], a
+	ld [rIF], a
 	ld a, $40
-	ld [STAT], a
+	ld [rSTAT], a
 	ld a, $e7
 	ld [$ff8a], a
-	ld [LCDC], a
+	ld [rLCDC], a
 	ld a, 5
-	ld [INTE], a
+	ld [rIE], a
 	ei 
 	xor a
-	ld [H_DRAW_FLAGS], a
+	ld [hDrawFlags], a
 	ld [$d03a], a
 	ld a, 6
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a
+	ld [wCurBank], a
+	ld [mbcBank], a
 	ld a, 5
 	ld [$d08a], a
 	ld a, 6
 	ld [$d088], a
-	call $4000
+	call LoadTitleScreen
 
 INCBIN "baserom.gb",$1c7,$131a-$1c7
 
@@ -88,11 +88,11 @@ CopyLevelBlock:
 	ld h, 0
 	add hl, hl
 	add hl, hl
-	ld bc, W_LEVEL
+	ld bc, wLevel
 	add hl, bc
-	ld a, [W_COPY_COUNT]
+	ld a, [wCopyCount]
 	ld [$d06b], a
-	ld a, [W_COPY_COUNT+1]
+	ld a, [wCopyCount+1]
 	ld [$d06c], a
 	ld [$d07f], a
 	call CopyBlockHeader
@@ -109,9 +109,9 @@ CopyLevelBlock:
 	ld [de], a
 	inc de
 	ld a, [$d06b]
-	ld [W_COPY_COUNT], a
+	ld [wCopyCount], a
 	ld a, [$d06c]
-	ld [W_COPY_COUNT+1], a
+	ld [wCopyCount+1], a
 	pop hl
 	pop bc
 	ret
@@ -119,13 +119,13 @@ CopyLevelBlock:
 CopyBlockHeader:
 	push bc
 	push hl
-	ld hl, V_LEVEL
-	ld a, [W_COPY_COUNT]
+	ld hl, vLevel
+	ld a, [wCopyCount]
 	srl a
 	srl a
 	srl a
 	ld [$d06e], a
-	ld a, [W_COPY_COUNT+1]
+	ld a, [wCopyCount+1]
 	srl a
 	srl a
 	srl a
@@ -155,18 +155,18 @@ INCBIN "baserom.gb",$1385,$193b-$1385
 ; d095 - begin offset
 ; d096 - if equals $ff, hide all
 HideSprites:
-	ld a, [W_HIDE_ALL]
+	ld a, [wHideAll]
 	inc a
 	jr nZ, .not_all
 	ld a, $a0
 	ld c, a
-	ld [$d096], a
+	ld [wHideAll], a
 	xor a
-	ld [$d095], a
+	ld [wOamOffset], a
 	jr .set_regs
 .not_all:
-	ld a, [W_OAM_OFFSET]
-	ld [W_HIDE_ALL], a
+	ld a, [wOamOffset]
+	ld [wHideAll], a
 	ld c, $a0
 .set_regs:
 	ld l, a
@@ -186,13 +186,13 @@ CopyLevelFrame:
 	push bc
 	push de
 	xor a
-	ld [W_COPY_COUNT], a
-	ld [W_COPY_COUNT+1], a
-	ld de, W_LEVEL_FRAME
+	ld [wCopyCount], a
+	ld [wCopyCount+1], a
+	ld de, wLevelFrame
 	ld a, $a
 	ld b, a
 .copy_loop:
-	ld a, [W_FRAME_SIZE]
+	ld a, [wFrameSize]
 	cp $a
 	jr z, .last_blocks
 	ld a, $b
@@ -201,14 +201,14 @@ CopyLevelFrame:
 .copy_blocks:
 	ldi a, [hl]
 	call CopyLevelBlock
-	ld a, [W_COPY_COUNT]
+	ld a, [wCopyCount]
 	add $10
-	ld [W_COPY_COUNT], a
+	ld [wCopyCount], a
 	dec c
 	jr nz, .copy_blocks
 	push bc
 	ld b, 0
-	ld a, [W_FRAME_SIZE]
+	ld a, [wFrameSize]
 	sub $a
 	jr z, .last2
 	sub 1
@@ -217,26 +217,26 @@ CopyLevelFrame:
 	add hl, bc
 	pop bc
 	xor a
-	ld [W_COPY_COUNT], a
-	ld a, [W_COPY_COUNT+1]
+	ld [wCopyCount], a
+	ld a, [wCopyCount+1]
 	add $10
-	ld [W_COPY_COUNT+1], a
+	ld [wCopyCount+1], a
 	dec b
 	jr nz, .copy_loop
 	xor a
 	ld [de], a
-	ld [W_COPY_COUNT], a
-	ld [W_COPY_COUNT+1], a
+	ld [wCopyCount], a
+	ld [wCopyCount+1], a
 	xor a
-	ld [SCX], a
-	ld [SCY], a
-	ld a, [H_DRAW_FLAGS]
+	ld [rSCX], a
+	ld [rSCY], a
+	ld a, [hDrawFlags]
 	or $60
-	ld [H_DRAW_FLAGS], a
+	ld [hDrawFlags], a
 	call CopyLevelToVRAM
 	ld a, [$d06b]
 	xor a
-	ld [H_DRAW_FLAGS], a
+	ld [hDrawFlags], a
 	pop de
 	pop bc
 	ret
@@ -245,9 +245,9 @@ INCBIN "baserom.gb",$19c9,$1c01-$19c9
 
 InitWindow:
 	ld a, $a0
-	ld [WX], a
+	ld [rWX], a
 	ld a, $90
-	ld [WY], a
+	ld [rWY], a
 	ret
 
 INCBIN "baserom.gb",$1c0a,$1c6b-$1c0a
@@ -276,7 +276,7 @@ VBlankHandler:
 	push bc
 	push de
 	push hl
-	ld hl, H_DRAW_FLAGS
+	ld hl, hDrawFlags
 	bit 6, [hl]
 	jp z, .lab1d9d
 	ld hl, $ff91
@@ -291,10 +291,10 @@ VBlankHandler:
 	call UpdateHUD
 	call CopyLevelToVRAM
 	call Func1e2e
-	call H_DMA_ROUTINE
-	ld a, [H_DRAW_FLAGS]
+	call hDmaRoutine
+	ld a, [hDrawFlags]
 	and $9f
-	ld [H_DRAW_FLAGS], a
+	ld [hDrawFlags], a
 	call $1dfb
 	call $1f08
 	call $68e
@@ -328,15 +328,15 @@ VBlankHandler:
 .lab1d81:
 	ld [hl], d
 .lab1d82:
-	ld a, [W_CURBANK]
+	ld a, [wCurBank]
 	push af
 	ld a, 5
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a
+	ld [wCurBank], a
+	ld [mbcBank], a
 	call $4e0b
 	pop af
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a
+	ld [wCurBank], a
+	ld [mbcBank], a
 	pop hl
 	pop de
 	pop bc
@@ -350,9 +350,9 @@ VBlankHandler:
 	jr .lab1d53
 .lab1da4:
 	ld a, [$d053]
-	ld [SCX], a
+	ld [rSCX], a
 	ld a, [$d055]
-	ld [SCY], a
+	ld [rSCY], a
 	ld hl, $cb00
 .lab1db1:
 	ldi a, [hl]
@@ -397,12 +397,12 @@ INCBIN "baserom.gb",$1e48,$1ee3-$1e48
 ; 2 bytes - address in VRAM
 ; 4 bytes - actual tiles
 CopyLevelToVRAM:
-	ld a, [H_DRAW_FLAGS]
+	ld a, [hDrawFlags]
 	bit 6, a
 	ret z
 	bit 5, a
 	ret z
-	ld bc, W_LEVEL_FRAME
+	ld bc, wLevelFrame
 .copy_loop:
 	ld a, [bc]
 	inc bc
@@ -431,27 +431,27 @@ CopyLevelToVRAM:
 INCBIN "baserom.gb",$1f08,$1fb2-$1f08
 
 UpdateHUD:
-	ld hl, H_DRAW_FLAGS
+	ld hl, hDrawFlags
 	bit 5, [hl]
 	ret nz
 	ld hl, $ff90
 	bit 6, [hl]
 	ret nz
-	ld a, [H_HUD_FLAGS]
+	ld a, [hHudFlags]
 	bit 0, a
 	jr z, .draw_sc
-	ld hl, V_SCORE
+	ld hl, vScore
 	ld c, 12
 .clear_score:
 	ld a, TILE_EMPTY
 	ldi [hl], a
 	dec c
 	jr nz, .clear_score
-	ld a, [H_HUD_FLAGS]
+	ld a, [hHudFlags]
 	bit 7, a
 	jr nz, .draw_boss_hp
-	ld hl, W_SCORE
-	ld bc, V_SCORE
+	ld hl, wScore
+	ld bc, vScore
 	ld d, 5
 .draw_score:
 	ldi a, [hl]
@@ -460,11 +460,11 @@ UpdateHUD:
 	dec d
 	jr nz, .draw_score
 	ld a, TILE_ZERO
-	ld [V_SCORE_ZERO], a
+	ld [vScoreZero], a
 	jr .score_done
 .draw_boss_hp:
-	ld hl, V_SCORE
-	ld a, [W_BOSS_HP]
+	ld hl, vScore
+	ld a, [wBossHp]
 	and a
 	jr z, .score_done
 	ld c, a
@@ -474,39 +474,39 @@ UpdateHUD:
 	dec c
 	jr nz, .draw_boss_hp_loop
 .score_done:
-	ld a, [H_HUD_FLAGS]
+	ld a, [hHudFlags]
 	res 0, a
-	ld [H_HUD_FLAGS], a
+	ld [hHudFlags], a
 .draw_sc:
-	ld a, [H_HUD_FLAGS]
+	ld a, [hHudFlags]
 	bit 1, a
 	jr z, .draw_hp
 	res 1, a
-	ld [H_HUD_FLAGS], a
+	ld [hHudFlags], a
 	bit 7, a
 	jr nz, .draw_mode_boss
 	ld a, TILE_EMPTY
-	ld [V_SC], a
+	ld [vSc], a
 	ld a, TILE_SC
-	ld [V_SC+1], a
+	ld [vSc+1], a
 	inc a
-	ld [V_SC+2], a
+	ld [vSc+2], a
 	jr .draw_hp
 .draw_mode_boss:
 	ld a, TILE_EMPTY
-	ld [V_SC], a
+	ld [vSc], a
         ld a, TILE_BOSS
-        ld [V_SC+1], a
+        ld [vSc+1], a
         ld a, TILE_EMPTY
-        ld [V_SC+2], a
+        ld [vSc+2], a
 .draw_hp:
-	ld a, [H_HUD_FLAGS]
+	ld a, [hHudFlags]
 	bit 2, a
 	jr nz, .draw_lifes
-	ld a, [W_HP]
+	ld a, [wHp]
 	ld c, a
 	ld b, a
-	ld hl, V_HP_BAR
+	ld hl, vHpBar
 	and a
 	jr z, .draw_hp_dot
 	ld a, TILE_HP_SQUARE
@@ -515,7 +515,7 @@ UpdateHUD:
 	dec c
 	jr nz, .draw_hp_square_loop
 .draw_hp_dot:
-	ld a, [W_HP_MAX]
+	ld a, [wHpMax]
 	sub b
 	ld b, a
 	jr z, .draw_empty
@@ -528,35 +528,35 @@ UpdateHUD:
 	ld a, TILE_EMPTY
 	ldi [hl], a
 .draw_lifes:
-	ld a, [H_HUD_FLAGS]
+	ld a, [hHudFlags]
 	bit 4, a
 	ret z
 	res 4, a
-	ld [H_HUD_FLAGS], a
-	ld a, [W_LIFES]
+	ld [hHudFlags], a
+	ld a, [wLifes]
 	dec a
 	call GetDigits
 	add TILE_ZERO
-	ld [V_LIFES+1], a
+	ld [vLifes+1], a
 	ld a, b
 	add TILE_ZERO
-	ld [V_LIFES], a
+	ld [vLifes], a
 	ret
 
 INCBIN "baserom.gb",$2070,$20c1-$2070
 
 ; c - bank to switch to
 SwitchAndDecompress:
-	ld a, [W_CURBANK]
+	ld a, [wCurBank]
 	push af
 	ld a, c
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a
-	ld [MBC1_BANK], a
+	ld [wCurBank], a
+	ld [mbcBank], a
+	ld [mbcBank], a
 	call Decompress
 	pop af
-	ld [W_CURBANK], a
-	ld [MBC1_BANK], a
+	ld [wCurBank], a
+	ld [mbcBank], a
 	ret
 
 ; Some kind of decompression
@@ -613,7 +613,7 @@ Decompress:
 	jp z, .read_flags
 .copy_byte:
 	ldi a, [hl]
-	call $d099
+	call wWramRoutine
 	jr .copy_loop_by1
 .copy_same:
 	ldi a, [hl]
@@ -623,7 +623,7 @@ Decompress:
 	dec b
 	jp z, .read_flags
 .copy_same_byte:
-	call $d099
+	call wWramRoutine
 	jr .copy_same_loop
 .copy_loop_by2:
 	dec c
@@ -632,9 +632,9 @@ Decompress:
 	jp z, .copy_by2_done
 .copy_2bytes:
 	ldi a, [hl]
-	call $d099
+	call wWramRoutine
 	ldd a, [hl]
-	call $d099
+	call wWramRoutine
 	jr .copy_loop_by2
 .copy_by2_done:
 	inc hl
@@ -648,7 +648,7 @@ Decompress:
 	dec b
 	jp z, .read_flags
 .copy_inc_byte:
-	call $d099
+	call wWramRoutine
 	inc a
 	jr .copy_inc_loop
 .flag_offset:
@@ -719,7 +719,7 @@ INCBIN "baserom.gb", $21a5, $21bb-$21a5
 
 ; Some sort of 'ldi [de], a'
 InitWRAMRoutine:
-	ld hl, $d099
+	ld hl, wWramRoutine
 	xor a
 	ldi [hl], a	; nop
 	ldi [hl], a	; nop
@@ -765,7 +765,7 @@ CopyDMARoutine:
 
 DMARoutine:
 	ld a, $c0
-	ld [DMA], a
+	ld [rDMA], a
 	ld a, $28
 .wait_loop:
 	dec a
@@ -796,7 +796,7 @@ MemInit:
 	ld a, 0
         ld [$d05d], a
 	ld a, $ff
-        ld [$d096], a
+        ld [wHideAll], a
         ld [$d03d], a
 	xor a
 	ld [hl], a
@@ -830,11 +830,11 @@ INCBIN "baserom.gb",$14b3a, $c4a-$b3a
 
 InitSound:
 	ld a, $80
-	ld [SND_POW], a
+	ld [rSNDPOW], a
 	ld a, $77
-	ld [SND_CH], a
+	ld [rSNDCH], a
 	ld a, $ff
-	ld [SND_SEL], a
+	ld [rSNDSEL], a
 	ld a, $ff
 	ld [$de01], a
 	ld [$de02], a
@@ -873,7 +873,7 @@ SECTION "rom6", ROMX,BANK[6]
 
 LoadTitleScreen:
 	ld a, $ff
-	ld [$d096], a
+	ld [wHideAll], a
 	call HideSprites
 	call $1e74
 	xor a
