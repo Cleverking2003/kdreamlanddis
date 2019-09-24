@@ -260,9 +260,9 @@ HudInit:
 	dec c
 	jr nz, .clear_loop
 	ld a, 7
-	ld [$ff4b], a
+	ld [rWX], a
 	ld a, $80
-	ld [$ff4a], a
+	ld [rWY], a
 	ld a, TILE_LIFE_ICON
 	ld [vLifeIcon], a
 	ld a, TILE_LIFE_CROSS
@@ -983,7 +983,35 @@ LoadTitleScreen:
 	call $1e96
 	ret
 
-INCBIN "baserom.gb",$180a0,$4000-$a0
+Func40a0:
+	ld a, [$d03a]
+	and a
+	ret z
+	ld bc, $9945
+	ld de, $40ca
+	ld hl, $cb00
+	ld a, $a
+.lab40b0:
+	push af
+	ld a, b
+	ldi [hl], a
+	ld a, c
+	ldi [hl], a	
+	ld a, [de]
+	ldi [hl], a
+	inc de
+	inc bc
+	pop af
+	dec a
+	jr nz, .lab40b0
+	xor a
+	ld [$cb1e], a
+	ldFromHigh $91
+	set 2, a
+	ldHigh $91
+	ret
+
+INCBIN "baserom.gb",$180ca,$4000-$ca
 
 SECTION "rom7", ROMX,BANK[7]
 INCBIN "baserom.gb",$1c000,$4000
