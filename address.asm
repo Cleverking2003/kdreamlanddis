@@ -26,6 +26,8 @@ wHp EQU $d086
 wHpMax EQU $d087
 ; Kirby's lifes
 wLifes EQU $d089
+; Num of starting lifes
+wInitLifes equ $d08a
 ; Score
 wScore EQU $d08e
 ; Boss' hp
@@ -58,6 +60,8 @@ vLifes EQU $9c30
 vLevel EQU $9800
 
 ; IO regs
+rTMA equ $ff06
+rTAC equ $ff07
 ; Interrupt flags
 rIF EQU $ff0f
 ; Channel control

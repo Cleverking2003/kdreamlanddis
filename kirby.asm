@@ -52,15 +52,15 @@ Start:
 	ld [rOBP1], a
 	ld a, 8
 	ld [rSCY], a
-	ld [$d055], a
+	ld [wScy], a
 	xor a
 	ld [rSCX], a
-	ld [$d053], a
+	ld [wScx], a
 	ld [rIF], a
 	ld a, $40
 	ld [rSTAT], a
 	ld a, $e7
-	ld [$ff8a], a
+	ld [hLcdc], a
 	ld [rLCDC], a
 	ld a, 5
 	ld [rIE], a
@@ -72,12 +72,73 @@ Start:
 	ld [wCurBank], a
 	ld [mbcBank], a
 	ld a, 5
-	ld [$d08a], a
+	ld [wInitLifes], a
 	ld a, 6
 	ld [$d088], a
 	call LoadTitleScreen
+	ld a, $c
+	ld [$d050], a
+	ld a, [wInitLifes]
+	ld [wLifes], a
+	call $231e
+	ld a, [$d03a]
+	ld [$d039], a
+	ld a, 6
+	ld [wCurBank], a
+	ld [mbcBank], a
+	call $40e4
+	ld a, 1
+	ld [wCurBank], a
+	ld [mbcBank], a 
+	ld a, $32
+	ld [hHudFlags], a
+	ld a, [wBgPal]
+	ld [rBGP], a
+.lab1f7:
+	ld a, [hDrawFlags]
+	bit 5, a
+	jr nZ, .lab1f7
+	bit 6, a
+	jr nZ, .lab1f7
+	bit 4, a
+	jr Z, .lab20c
+	and $f
+	jr nZ, .lab20c
+	xor a
+	ld [hDrawFlags], a
+.lab20c:
+	ld a, [$ff94]
+	bit 3, a
+	jr Z, .lab21e
+	xor a
+	ld [$ff8b], a
+	ld a, [hDrawFlags]
+	and $10
+	ld [hDrawFlags], a
+	jp $4783
+.lab21e:
+	ld a, [$ff8e]
+	bit 4, a
+	jr Z, .lab22a
+	ld a, [$ff8b]
+	and $4e
+	ld [$ff8b], a
+.lab22a:
+	ld a, [$ff8b]
+	bit 3, a
+	jr Z, .lab23b
+	ld a, 6
+	ld [wCurBank], a
+	ld [mbcBank], a
+	call $459e
+.lab23b:
+	ld a, 1
+	ld [wCurBank], a
+	ld [mbcBank], a
+	jp $42bf
 
-INCBIN "baserom.gb",$1c7,$131a-$1c7
+
+INCBIN "baserom.gb",$246,$131a-$246
 
 ; a - offset from wLevel div 4
 ; copies level block to de
@@ -250,8 +311,8 @@ InitWindow:
 	ld [rWY], a
 	ret
 
-HudInit:
-	call $1e74
+InitHUD:
+	call Func1e74
 	ld c, $40
 	ld hl, vHud
 	ld a, TILE_EMPTY
@@ -281,7 +342,7 @@ HudInit:
 	ld [vScore+4], a
 	ld [vLifes], a
 	ld [vLifes+1], a
-	jp $1e67
+	jp Func1e67
 
 INCBIN "baserom.gb",$1c52,$1c6b-$1c52
 
@@ -437,7 +498,34 @@ Func1e2e:
 	ld [hl], a
 	ret
 
-INCBIN "baserom.gb",$1e48,$1ee3-$1e48
+INCBIN "baserom.gb",$1e48,$1e67-$1e48
+
+Func1e67:
+	ld a, 0
+	ld [rTAC], a
+	ld a, [hLcdc]
+	set 7, a
+	ld [hLcdc], a
+	ld [rLCDC], a
+	ret
+
+Func1e74:
+	ld hl, hLcdc
+	res 7, [hl]
+	ld hl, $ff91
+	set 3, [hl]
+.lab1e7e:
+	bit 3, [hl]
+	jr nZ, .lab1e7e
+	ld a, 0
+	ld [rTAC], a
+	ld a, $bc
+	ld [rTMA], a
+	ld a, 4
+	ld [rTAC], a
+	ret
+
+INCBIN "baserom.gb",$1e8f,$1ee3-$1e8f
 
 ; level data is stored in blocks
 ; 2 bytes - address in VRAM
