@@ -562,7 +562,108 @@ CopyLevelToVRAM:
 	ld [hl], a
 	jr .copy_loop
 
-INCBIN "baserom.gb",$1f08,$1fb2-$1f08
+UpdatePal: ; 1f08
+	ld a, [$d032]
+	cp $05
+	ret C
+	xor a
+	ld [$d032], a
+	ld a, [$ff90]
+	bit 7, a
+	ret Z
+	and $04
+	ld e, a
+	ld a, [$ff90]
+	and $03
+	ld c, a
+	cp $03
+	jp Z, .lab1fab
+	inc a
+	ld b, a
+	ld a, [$ff90]
+	and $fc
+	or b
+	ld [$ff90], a
+	ld a, [$ff90]
+	bit 6, a
+	jr nZ, .lab1f78
+	ld d, $00
+	ld b, d
+	ld hl, $20b9
+	add hl, de
+	add hl, bc
+	ld a, [wBgPal]
+	bit 2, e
+	jr nZ, .lab1f48
+	srl a
+	srl a
+	jr .lab1f4c
+.lab1f48:
+	sla a
+	sla a
+.lab1f4c:
+	ld b, a
+	ld a, [hl]
+	or b
+	ld [wBgPal], a
+	ld [$ff47], a
+	ld [$ff49], a
+	ld d, 0
+	ld b, d
+	ld hl, $20b1
+	add hl, de
+	add hl, bc
+	ld a, [wObPal]
+	bit 2, e
+	jr nZ, .lab1f6b
+	srl a
+	srl a
+	jr .lab1f6f
+.lab1f6b:
+	sla a
+	sla a
+.lab1f6f:
+	ld b, a
+	ld a, [hl]
+	or b
+	ld [wObPal], a
+	ld [$ff48], a
+	ret
+.lab1f78:
+	ld a, [wBgPal]
+	bit 2, e
+	jr nZ, .lab1f85
+	sla a
+	sla a
+	jr .lab1f8b
+.lab1f85:
+	srl a
+	srl a
+	or $c0
+.lab1f8b:
+	ld [wBgPal], a
+	ld [$ff47], a
+	ld [$ff49], a
+	ld a, [wObPal]
+	bit 2, e
+	jr nZ, .lab1f9f
+	sla a
+	sla a
+	jr .lab1fa5
+.lab1f9f:
+	srl a
+	srl a
+	or $c0
+.lab1fa5:
+	ld [wObPal], a
+	ld [$ff48], a
+	ret
+.lab1fab:
+	ld a, [$ff90]
+	and $7c
+	ld [$ff90], a
+	ret
+
 
 UpdateHUD:
 	ld hl, hDrawFlags

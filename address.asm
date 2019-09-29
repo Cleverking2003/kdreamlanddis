@@ -20,6 +20,8 @@ wScy equ $d055
 wCopyCount EQU $d057
 ; Updated BG palette
 wBgPal equ $d080
+; Currrent OB0 palette
+wObPal equ $d081
 ; Kirby's hp
 wHp EQU $d086
 ; Max Kirby's hp
