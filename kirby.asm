@@ -14,9 +14,9 @@ INCBIN "baserom.gb",0,$40
 SECTION "vblankint", ROM0[$40]
 	jp VBlankHandler
 SECTION "lcdcint", ROM0[$48]
-	jp $1e0f
+	jp LcdcHandler
 SECTION "timerint", ROM0[$50]
-        jp $1e48
+        jp TimerHandler
 INCBIN "baserom.gb",$53, $100-$53
 
 SECTION "header", ROM0[$100]
@@ -94,12 +94,12 @@ Start:
 	ld [hHudFlags], a
 	ld a, [wBgPal]
 	ld [rBGP], a
-.lab1f7:
+.wait_for_screen_update:
 	ld a, [hDrawFlags]
 	bit 5, a
-	jr nZ, .lab1f7
+	jr nZ, .wait_for_screen_update
 	bit 6, a
-	jr nZ, .lab1f7
+	jr nZ, .wait_for_screen_update
 	bit 4, a
 	jr Z, .lab20c
 	and $f
@@ -142,7 +142,7 @@ INCBIN "baserom.gb",$246,$131a-$246
 
 ; a - offset from wLevel div 4
 ; copies level block to de
-CopyLevelBlock:
+CopyLevelBlock: ;131a
 	push bc
 	push hl
 	ld l, a
@@ -177,7 +177,7 @@ CopyLevelBlock:
 	pop bc
 	ret
 
-CopyBlockHeader:
+CopyBlockHeader: ;1352
 	push bc
 	push hl
 	ld hl, vLevel
@@ -215,7 +215,7 @@ INCBIN "baserom.gb",$1385,$193b-$1385
 
 ; d095 - begin offset
 ; d096 - if equals $ff, hide all
-HideSprites:
+HideSprites: ;193b
 	ld a, [wHideAll]
 	inc a
 	jr nZ, .not_all
@@ -243,7 +243,7 @@ HideSprites:
 	ret
 
 ; hl - pointer to block
-CopyLevelFrame:
+CopyLevelFrame: ;1964
 	push bc
 	push de
 	xor a
@@ -304,14 +304,14 @@ CopyLevelFrame:
 
 INCBIN "baserom.gb",$19c9,$1c01-$19c9
 
-InitWindow:
+InitWindow: ;1c01
 	ld a, $a0
 	ld [rWX], a
 	ld a, $90
 	ld [rWY], a
 	ret
 
-InitHUD:
+InitHUD: ;1c0a
 	call Func1e74
 	ld c, $40
 	ld hl, vHud
@@ -348,7 +348,7 @@ INCBIN "baserom.gb",$1c52,$1c6b-$1c52
 
 ; Get digits of a 
 ; c - hundreds, b - tens, a - ones
-GetDigits:
+GetDigits: ;1c6b
 	ld b, $ff
 	ld c, b
 .count_hundreds:
@@ -365,7 +365,7 @@ GetDigits:
 
 INCBIN "baserom.gb",$1c7d,$1d16-$1c7d
 
-VBlankHandler:
+VBlankHandler: ;1d16
 	push af
 	push bc
 	push de
@@ -465,7 +465,7 @@ VBlankHandler:
 
 INCBIN "baserom.gb",$1dc3,$1dfb-$1dc3
 
-UpdateScrRegs:
+UpdateScrRegs: ;1dfb
 	ld a, [hLcdc]
 	ld [rLCDC], a
 	ld a, [wScx]
@@ -476,9 +476,30 @@ UpdateScrRegs:
 	ld [rBGP], a
 	ret
 
-incbin "baserom.gb",$1e0f,$1e2e-$1e0f
+LcdcHandler: ;1e0f
+	push af
+	push bc
+	push hl
+	ld b, 7
+.wait:
+	dec b
+	jr nZ, .wait
+	ld hl, rLCDC
+	ld a, [$d05b]
+	ld c, a
+	ld a, $e4
+	set 3, [hl]
+	ld [rBGP], a
+	xor a
+	ld [rSCX], a
+	ld a, c
+	ld [rSCY], a
+	pop hl
+	pop bc
+	pop af
+	reti
 
-Func1e2e:
+Func1e2e: ;1e2e
 	ld hl, $ff96
 	bit 7, [hl]
 	ret z
@@ -498,9 +519,27 @@ Func1e2e:
 	ld [hl], a
 	ret
 
-INCBIN "baserom.gb",$1e48,$1e67-$1e48
+TimerHandler: ;1e48
+	push af
+	push bc
+	push de
+	push hl
+	ld a, [wCurBank]
+	push af
+	ld a, 5
+	ld [wCurBank], a
+	ld [mbcBank], a
+	call $4e0b
+	pop af
+	ld [wCurBank], a
+	ld [mbcBank], a
+	pop hl
+	pop de
+	pop bc
+	pop af
+	reti
 
-Func1e67:
+Func1e67: ;1e67
 	ld a, 0
 	ld [rTAC], a
 	ld a, [hLcdc]
@@ -509,7 +548,7 @@ Func1e67:
 	ld [rLCDC], a
 	ret
 
-Func1e74:
+Func1e74: ;1e74
 	ld hl, hLcdc
 	res 7, [hl]
 	ld hl, $ff91
@@ -530,7 +569,7 @@ INCBIN "baserom.gb",$1e8f,$1ee3-$1e8f
 ; level data is stored in blocks
 ; 2 bytes - address in VRAM
 ; 4 bytes - actual tiles
-CopyLevelToVRAM:
+CopyLevelToVRAM: ;1ee3
 	ld a, [hDrawFlags]
 	bit 6, a
 	ret z
@@ -665,7 +704,7 @@ UpdatePal: ; 1f08
 	ret
 
 
-UpdateHUD:
+UpdateHUD: ;1fb2
 	ld hl, hDrawFlags
 	bit 5, [hl]
 	ret nz
@@ -781,7 +820,7 @@ UpdateHUD:
 INCBIN "baserom.gb",$2070,$20c1-$2070
 
 ; c - bank to switch to
-SwitchAndDecompress:
+SwitchAndDecompress: ;20c1
 	ld a, [wCurBank]
 	push af
 	ld a, c
@@ -797,7 +836,7 @@ SwitchAndDecompress:
 ; Some kind of decompression
 ; hl - source
 ; de - destination
-Decompress:
+Decompress: ;20da
 	ld a, e
 	ld [$d097], a
 	ld a, d
@@ -953,7 +992,7 @@ Decompress:
 INCBIN "baserom.gb", $21a5, $21bb-$21a5
 
 ; Some sort of 'ldi [de], a'
-InitWRAMRoutine:
+InitWRAMRoutine: ;21bb
 	ld hl, wWramRoutine
 	xor a
 	ldi [hl], a	; nop
@@ -974,19 +1013,19 @@ INCBIN "baserom.gb",$21ce,$4000-$21ce
 SECTION "rom1", ROMX,BANK[1]
 INCBIN "baserom.gb",$4000,$4000
 SECTION "rom2", ROMX,BANK[2]
-MainTiles:
+MainTiles: ;4000
 INCBIN "baserom.gb",$8000,$37e9
-Font:
+Font: ;77e9
 INCBIN "baserom.gb",$b7e9,$4000-$37e9
 SECTION "rom3", ROMX,BANK[3]
-TitleMap:
+TitleMap: ;4000
 INCBIN "baserom.gb",$c000,$4000
 SECTION "rom4", ROMX,BANK[4]
 INCBIN "baserom.gb",$10000,$4000
 SECTION "rom5", ROMX,BANK[5]
 INCBIN "baserom.gb",$14000,$abe
 
-CopyDMARoutine:
+CopyDMARoutine: ;4abe
 	ld c, $80
 	ld b, $a
 	ld hl, DMARoutine
@@ -998,7 +1037,7 @@ CopyDMARoutine:
 	jr nz, .copy_loop
 	ret
 
-DMARoutine:
+DMARoutine: ;4acc
 	ld a, $c0
 	ld [rDMA], a
 	ld a, $28
@@ -1007,7 +1046,7 @@ DMARoutine:
 	jr nz, .wait_loop
 	ret
 
-MemInit:
+MemInit: ;4ad6
 	ld hl, $c000
 .clear_wram_loop:
 	xor a
@@ -1055,7 +1094,7 @@ MemInit:
 	ld [hl], a
 	ret
 
-Func4b30:
+Func4b30: ;4b30
 	ld hl, $4b3a
 	ld de, $dc00
 	call Decompress
@@ -1063,7 +1102,7 @@ Func4b30:
 
 INCBIN "baserom.gb",$14b3a, $c4a-$b3a
 
-InitSound:
+InitSound: ;4c4a
 	ld a, $80
 	ld [rSNDPOW], a
 	ld a, $77
@@ -1106,7 +1145,7 @@ INCBIN "baserom.gb", $14c9e, $4000-$c9e
 
 SECTION "rom6", ROMX,BANK[6]
 
-LoadTitleScreen:
+LoadTitleScreen: ;4000
 	ld a, $ff
 	ld [wHideAll], a
 	call HideSprites
@@ -1172,7 +1211,7 @@ LoadTitleScreen:
 	call $1e96
 	ret
 
-Func40a0:
+Func40a0: ;40a0
 	ld a, [$d03a]
 	and a
 	ret z
@@ -1209,9 +1248,9 @@ INCBIN "baserom.gb",$20000,$4000
 SECTION "rom9", ROMX,BANK[9]
 INCBIN "baserom.gb",$24000,$4000
 SECTION "roma", ROMX,BANK[$a]
-TitleKirby:
+TitleKirby: ;4000
 INCBIN "baserom.gb",$28000,$2ac
-GameLogo:
+GameLogo: ;42ac
 INCBIN "baserom.gb",$282ac,$4000-$2ac
 SECTION "romb", ROMX,BANK[$b]
 INCBIN "baserom.gb",$2c000,$4000
