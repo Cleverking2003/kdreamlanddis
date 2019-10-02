@@ -152,7 +152,7 @@ CopyLevelBlock: ;131a
 	ld bc, wLevel
 	add hl, bc
 	ld a, [wCopyCount]
-	ld [$d06b], a
+	ld [wSprAttr], a
 	ld a, [wCopyCount+1]
 	ld [$d06c], a
 	ld [$d07f], a
@@ -169,7 +169,7 @@ CopyLevelBlock: ;131a
 	ld a, [hl]
 	ld [de], a
 	inc de
-	ld a, [$d06b]
+	ld a, [wSprAttr]
 	ld [wCopyCount], a
 	ld a, [$d06c]
 	ld [wCopyCount+1], a
@@ -211,7 +211,37 @@ CopyBlockHeader: ;1352
 	pop bc
 	ret
 
-INCBIN "baserom.gb",$1385,$193b-$1385
+INCBIN "baserom.gb",$1385,$1913-$1385
+
+UpdateOamCopy:
+	ld a, [wOamOffset]
+	ld e, a
+	ld d, $c0
+.copy_loop:
+	ldi a, [hl]
+	add c
+	ld [de], a
+	inc e
+	ldi a, [hl]
+	add b
+	ld [de], a
+	inc e
+	ldi a, [hl]
+	ld [de], a
+	inc e
+	ld a, [wSprAttr]
+	xor [hl]
+	ld [de], a
+	inc hl
+	inc e
+	bit 0, a
+	jr Z, .copy_loop
+	ld a, e
+	ld [wOamOffset], a
+	pop af
+	ld [wCurBank], a
+	ld [mbcBank], a
+	ret 
 
 ; d095 - begin offset
 ; d096 - if equals $ff, hide all
@@ -295,7 +325,7 @@ CopyLevelFrame: ;1964
 	or $60
 	ld [hDrawFlags], a
 	call CopyLevelToVRAM
-	ld a, [$d06b]
+	ld a, [wSprAttr]
 	xor a
 	ld [hDrawFlags], a
 	pop de

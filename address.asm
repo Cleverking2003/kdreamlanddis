@@ -18,6 +18,8 @@ wScx equ $d053
 wScy equ $d055
 ; Level frame copy counter
 wCopyCount EQU $d057
+; Current sprite attributes
+wSprAttr equ $d06b
 ; Updated BG palette
 wBgPal equ $d080
 ; Currrent OB0 palette
