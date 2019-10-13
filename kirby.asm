@@ -1065,7 +1065,111 @@ INCBIN "baserom.gb",$c000,$4000
 SECTION "rom4", ROMX,BANK[4]
 INCBIN "baserom.gb",$10000,$4000
 SECTION "rom5", ROMX,BANK[5]
-INCBIN "baserom.gb",$14000,$abe
+INCBIN "baserom.gb",$14000,$3ef
+
+Call_005_43ef:
+    ld hl, $d190
+    add hl, bc
+    bit 6, [hl]
+    jr z, jr_005_43fe
+
+    push bc
+    xor a
+    call $4600
+    pop bc
+    ret
+
+jr_005_43fe:
+    call $48dc
+    dec hl
+    dec hl
+    ld a, [hl+]
+    ld [wDamage], a
+    inc hl
+
+Call_005_4408:
+    ld a, [hl+]
+    ld [$d40f], a
+    ld a, [hl+]
+    ld [$d40c], a
+    ld a, [hl+]
+    ld [$d40d], a
+    ld a, [hl+]
+    ld [$d40e], a
+    ld hl, $d3e1
+    ld a, [$d3f5]
+    or [hl]
+    inc hl
+    or [hl]
+    jr nz, jr_005_4466
+
+    ld a, $5a
+    ld [$d3f5], a
+    ld hl, $d1a0
+    set 5, [hl]
+    ldFromHigh $91
+    bit 0, a
+    jr nz, jr_005_4453
+
+    ld hl, $ff94
+    set 3, [hl]
+    res 4, [hl]
+    ld hl, $d140
+    ld a, [hl]
+    add hl, bc
+    cp [hl]
+    jr nc, jr_005_4448
+
+    ld hl, $ff94
+    set 4, [hl]
+
+jr_005_4448:
+    xor a
+    ld [$d069], a
+    ld a, $06
+    call $1e96
+    jr got_damage
+
+jr_005_4453:
+    ld a, $08
+    call $1e96
+
+got_damage:
+    ld a, [wDamage]
+    ld e, a
+    ld a, [wHp]
+    sub e
+    jr nc, .set_hp
+    xor a
+
+.set_hp:
+    ld [wHp], a
+
+jr_005_4466:
+    ld a, [$d40f]
+    bit 3, a
+    ret nz
+
+    bit 0, a
+    ret z
+
+    call $456d
+    ret nz
+
+    ld a, [$d40c]
+    add a
+    call $3168
+    ld a, [wHp]
+    and a
+    ret z
+
+    ld a, [$d40d]
+    ld e, a
+    ld a, [$d40e]
+    ld d, a
+    jp $23af
+    
+incbin "baserom.gb",$1448a,$abe-$48a
 
 CopyDMARoutine: ;4abe
 	ld c, $80
@@ -1098,11 +1202,11 @@ MemInit: ;4ad6
 	jr nz, .clear_wram_loop
 	ld hl, $ff8a
 .clear_hram_loop:
-        xor a
-        ldi [hl], a
-        ld a, l
-        cp $97
-        jr nz, .clear_hram_loop
+    xor a
+    ldi [hl], a
+    ld a, l
+    cp $97
+    jr nz, .clear_hram_loop
 	ld a, 1
 	ld [$d051], a
 	ld [$d052], a
@@ -1207,18 +1311,18 @@ LoadTitleScreen: ;4000
 	ld de, $8800
 	ld c, bank(TitleKirby)
 	call SwitchAndDecompress
-        ld hl, GameLogo
-        ld de, $9000
-        ld c, bank(GameLogo)
-        call SwitchAndDecompress
-        ld hl, Font
-        ld de, $8e00
-        ld c, bank(Font)
-        call SwitchAndDecompress
-        ld hl, TitleMap
-        ld de, vLevel
-        ld c, bank(TitleMap)
-        call SwitchAndDecompress
+    ld hl, GameLogo
+    ld de, $9000
+    ld c, bank(GameLogo)
+    call SwitchAndDecompress
+    ld hl, Font
+    ld de, $8e00
+    ld c, bank(Font)
+    call SwitchAndDecompress
+    ld hl, TitleMap
+    ld de, vLevel
+    ld c, bank(TitleMap)
+    call SwitchAndDecompress
 	ld a, 5
 	call $1eb4
 	ld a, 1

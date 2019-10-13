@@ -42,6 +42,8 @@ wOamOffset EQU $d095
 wHideAll EQU $d096
 ; Routine, which imitates 'ldi [de], a'
 wWramRoutine equ $d099
+; Damage from enemies
+wDamage equ $d40b
 
 ; VRAM
 ; HUD
