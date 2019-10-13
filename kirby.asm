@@ -1038,7 +1038,19 @@ InitWRAMRoutine: ;21bb
 	ld [hl], a	; ret
 	ret
 
-INCBIN "baserom.gb",$21ce,$4000-$21ce
+INCBIN "baserom.gb",$21ce,$231e-$21ce
+
+ClearSomething:
+    ld b, $10
+    ld hl, $d160
+    xor a
+.clear_loop:
+    ld [hl+], a
+    dec b
+    jr nz, .clear_loop
+    ret
+
+incbin "baserom.gb",$2329,$4000-$2329
 
 SECTION "rom1", ROMX,BANK[1]
 INCBIN "baserom.gb",$4000,$4000
